@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計學 AI 教學助理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        /* 暗色主題配色方案 */
+        .glass {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(71, 85, 105, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.4);
+        }
+        
+        /* 暗色滾動條 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.6);
+            border-radius: 3px;
+        }
+        
+        /* 載入動畫 */
+        @keyframes simpleBounce {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+        
+        .animate-bounce-dot {
+            animation: simpleBounce 1s ease-in-out infinite;
+        }
+        
+        .animate-bounce-dot:nth-child(1) { animation-delay: 0s; }
+        .animate-bounce-dot:nth-child(2) { animation-delay: 0.2s; }
+        .animate-bounce-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        /* 頁面載入動畫 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        /* 動畫類別 */
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .animate-fadeInDown {
+            animation: fadeInDown 0.6s ease-out;
+        }
+        
+        .animate-slideInLeft {
+            animation: slideInLeft 0.6s ease-out;
+        }
+        
+        .animate-slideInRight {
+            animation: slideInRight 0.6s ease-out;
+        }
+        
+        .animate-scaleIn {
+            animation: scaleIn 0.6s ease-out;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        /* 延遲動畫 */
+        .animate-delay-100 { animation-delay: 0.1s; }
+        .animate-delay-200 { animation-delay: 0.2s; }
+        .animate-delay-300 { animation-delay: 0.3s; }
+        .animate-delay-400 { animation-delay: 0.4s; }
+        .animate-delay-500 { animation-delay: 0.5s; }
+        
+        /* 互動動畫效果 */
+        .btn-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-hover:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-hover:active {
+            transform: translateY(0);
+        }
+        
+        /* 輸入框動畫 */
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: scale(1.02);
+        }
+        
+        /* 炫酷發送按鈕樣式 */
+        .send-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 58px;
+            position: relative;
+            padding: 0 20px;
+            font-size: 16px;
+            text-transform: uppercase;
+            border: 0;
+            box-shadow: hsl(210deg 87% 36%) 0px 7px 0px 0px;
+            background-color: hsl(210deg 100% 44%);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: 31ms cubic-bezier(.5, .7, .4, 1);
+            min-width: 80px;
+        }
+
+        .send-btn:before {
+            content: attr(alt);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            inset: 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: 2px;
+            opacity: 1;
+        }
+
+        .send-btn:active {
+            box-shadow: none;
+            transform: translateY(7px);
+            transition: 35ms cubic-bezier(.5, .7, .4, 1);
+        }
+
+        .send-btn:hover:before {
+            transition: all .0s;
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        .send-btn i {
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-style: normal;
+            transition: all 2s ease;
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+
+        .send-btn:hover i {
+            transition: all .2s ease;
+            transform: translateY(0px);
+            opacity: 1;
+        }
+
+        .send-btn:hover i:nth-child(1) {
+            transition-delay: 0.045s;
+        }
+
+        .send-btn:hover i:nth-child(2) {
+            transition-delay: calc(0.045s * 2);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: hsl(210deg 87% 36%) 0px 7px 0px 0px;
+        }
+        
+        .send-btn:disabled:hover:before {
+            transform: none;
+            opacity: 1;
+        }
+        
+        .send-btn:disabled:hover i {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        
+        /* 訊息氣泡動畫 */
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .message-bubble {
+            animation: messageSlideIn 0.4s ease-out;
+        }
+        
+        /* 簡化陰影 */
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Markdown 樣式 */
+        .markdown-content {
+            line-height: 1.7;
+        }
+        
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, 
+        .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+            margin: 1rem 0 0.5rem 0;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .markdown-content h1 { font-size: 1.5rem; }
+        .markdown-content h2 { font-size: 1.3rem; }
+        .markdown-content h3 { font-size: 1.1rem; }
+        
+        .markdown-content p {
+            margin: 0.5rem 0;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .markdown-content ul {
+            list-style-type: disc;
+        }
+        
+        .markdown-content ol {
+            list-style-type: decimal;
+        }
+        
+        .markdown-content li {
+            margin: 0.25rem 0;
+            display: list-item;
+        }
+        
+        .markdown-content ul li::marker {
+            color: #94a3b8;
+            font-size: 1.2em;
+        }
+        
+        .markdown-content ol li::marker {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        
+        .markdown-content strong {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .markdown-content em {
+            font-style: italic;
+            color: #cbd5e1;
+        }
+        
+        .markdown-content code {
+            background: rgba(71, 85, 105, 0.6);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #fbbf24;
+        }
+        
+        .markdown-content pre {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            border: 1px solid rgba(71, 85, 105, 0.4);
+        }
+        
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 3px solid #3b82f6;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #cbd5e1;
+            font-style: italic;
+        }
+        
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .markdown-content th, .markdown-content td {
+            padding: 0.5rem;
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            text-align: left;
+        }
+        
+        .markdown-content th {
+            background: rgba(51, 65, 85, 0.6);
+            font-weight: 600;
+        }
+        
+        /* MathJax 數學公式樣式 */
+        .MathJax {
+            color: #e2e8f0 !important;
+        }
+        
+        .markdown-content .MathJax_Display {
+            margin: 1rem 0 !important;
+        }
+        
+        /* 確保列表樣式不被覆蓋 */
+        .markdown-content ul li {
+            list-style: disc outside;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        
+        .markdown-content ol li {
+            list-style: decimal outside;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        
+        /* 確保在暗色主題下項目符號可見 */
+        .markdown-content ul li::before {
+            content: none;
+        }
+    </style>
+    
+    <script>
+        // MathJax 配置 - 需要在 MathJax 加載前設置
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                processRefs: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                processHtmlClass: 'tex2jax_process',
+                ignoreHtmlClass: 'tex2jax_ignore'
+            },
+            chtml: {
+                scale: 1.0,
+                minScale: 0.5,
+                matchFontHeight: false
+            },
+            startup: {
+                ready: function () {
+                    console.log('MathJax is loaded and ready');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+</head>
+<body class="min-h-screen bg-cover bg-center bg-no-repeat" 
+      style="background-image: url('https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg');">
+    
+    <!-- 背景遮罩 -->
+    <div class="fixed inset-0 bg-black/20"></div>
+    
+    <!-- 主容器 -->
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl mx-auto">
+            
+            <!-- 標題區域 -->
+            <div class="text-center mb-8 animate-fadeInDown">
+                <div class="glass rounded-3xl p-8 mb-6 card-shadow animate-scaleIn animate-delay-200">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-100 mb-4 animate-pulse-slow">
+                        📊 AI 教學助理
+                    </h1>
+                    <p class="text-lg text-slate-300 font-light animate-fadeInUp animate-delay-400">
+                        您的專業統計學習夥伴，隨時為您解答統計學相關問題
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 主聊天界面 -->
+            <div class="glass rounded-3xl card-shadow overflow-hidden animate-fadeInUp animate-delay-300">
+                
+                <!-- 聊天區域 -->
+                <div class="h-96 md:h-[500px] flex flex-col">
+                    
+                    <!-- 訊息容器 -->
+                    <div id="messages" class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                        
+                        <!-- 歡迎訊息 -->
+                        <div class="text-center py-8" id="welcomeSection">
+                            <div class="glass-dark rounded-2xl p-6 mb-6 mx-auto max-w-md animate-scaleIn animate-delay-500">
+                                <div class="text-2xl mb-3 animate-pulse-slow">👋</div>
+                                <p class="text-slate-200 leading-relaxed animate-fadeInUp animate-delay-600">
+                                    歡迎使用統計學 AI 教學助理！<br>
+                                    我可以幫助您解答統計學相關的問題，包括描述統計、推論統計、假設檢定等主題。
+                                </p>
+                            </div>
+                            
+                            <!-- 用戶登入區域 -->
+                            <div class="mb-6 animate-fadeInUp animate-delay-600" id="loginSection">
+                                <div class="glass-dark rounded-2xl p-6 max-w-md mx-auto">
+                                    <h3 class="text-slate-200 text-lg font-medium mb-4 text-center">
+                                        🔐 登入以追蹤學習進度
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <input type="text" id="usernameInput" placeholder="輸入用戶名" 
+                                               class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm">
+                                        <div class="flex gap-2">
+                                            <button onclick="loginUser()" 
+                                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                                登入
+                                            </button>
+                                            <button onclick="registerUser()" 
+                                                    class="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                                註冊
+                                            </button>
+                                        </div>
+                                        <button onclick="continueAsGuest()" 
+                                                class="w-full text-slate-400 hover:text-slate-300 text-sm py-2 transition-colors">
+                                            以訪客身份繼續
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 範例問題 -->
+                            <div class="grid gap-3 max-w-2xl mx-auto animate-fadeInUp animate-delay-700" id="exampleQuestions" style="display: none;">
+                                <h3 class="text-slate-300 text-sm font-medium mb-2 flex items-center justify-center gap-2">
+                                    <span class="animate-pulse-slow">💡</span> 點擊下方範例開始對話
+                                </h3>
+                                
+                                <div class="grid gap-2 md:grid-cols-2">
+                                    <button onclick="askExample('什麼是標準差？如何計算？')" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-100">
+                                        什麼是標準差？如何計算？
+                                    </button>
+                                    <button onclick="askExample('請解釋中央極限定理')" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-200">
+                                        請解釋中央極限定理
+                                    </button>
+                                    <button onclick="askExample('如何進行t檢定？')" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-300">
+                                        如何進行t檢定？
+                                    </button>
+                                    <button onclick="askExample('什麼時候使用卡方檢定？')" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-400">
+                                        什麼時候使用卡方檢定？
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 載入動畫 -->
+                        <div id="loading" class="hidden flex items-center gap-3 mb-4">
+                            <div class="glass-dark rounded-2xl px-6 py-4 flex items-center gap-3">
+                                <span class="text-slate-200 text-sm">AI 正在思考中</span>
+                                <div class="flex gap-1">
+                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
+                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
+                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- 輸入區域 -->
+                    <div class="p-6 border-t border-slate-600/50">
+                        <!-- 用戶信息欄（登入後顯示） -->
+                        <div id="userInfoBar" class="hidden mb-4 flex items-center justify-between bg-slate-700/30 rounded-xl p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-sm font-bold" id="userAvatar">U</span>
+                                </div>
+                                <div>
+                                    <div class="text-slate-200 text-sm font-medium" id="userDisplayName">用戶</div>
+                                    <div class="text-slate-400 text-xs" id="userStatus">已登入</div>
+                                </div>
+                            </div>
+                            <button onclick="logoutUser()" 
+                                    class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-200 text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                登出
+                            </button>
+                        </div>
+                        
+                        <div class="flex gap-3 items-center">
+                            <div class="flex-1">
+                                <input type="text" 
+                                       id="messageInput"
+                                       placeholder="請輸入您的統計學問題..."
+                                       class="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/60 rounded-2xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent input-focus"
+                                       onkeypress="handleKeyPress(event)">
+                            </div>
+                            <button id="sendButton" 
+                                    onclick="sendMessage()"
+                                    alt="發送"
+                                    class="send-btn focus:outline-none">
+                                <i>發</i>
+                                <i>送</i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- 底部信息 -->
+            <div class="text-center mt-6 animate-fadeInUp animate-delay-500">
+                <p class="text-slate-400 text-sm animate-pulse-slow">
+                    由 AI 技術驅動 • 專業統計學教學助理
+                </p>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE_URL = window.location.origin + '/api';
+        
+        // DOM 元素
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingElement = document.getElementById('loading');
+        const welcomeSection = document.getElementById('welcomeSection');
+        
+        // 應用狀態
+        let currentUser = null;
+        let currentSessionId = null;
+        let isLoggedIn = false;
+
+        // 用戶管理函數
+        async function loginUser() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('請輸入用戶名');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    isLoggedIn = true;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showChatInterface();
+                    addMessage(`歡迎回來，${currentUser.username}！您的學習進度將被記錄。`);
+                } else {
+                    console.error('登入失敗:', data.error);
+                    alert(data.error || '登入失敗，請稍後再試');
+                }
+            } catch (error) {
+                console.error('登入錯誤:', error);
+                alert('登入時發生錯誤，請稍後再試');
+            }
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('請輸入用戶名');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    isLoggedIn = true;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showChatInterface();
+                    addMessage(`歡迎，${currentUser.username}！您的帳戶已創建，學習進度將被追蹤。`);
+                } else {
+                    console.error('註冊失敗:', data.error);
+                    alert(data.error || '註冊失敗，請稍後再試');
+                }
+            } catch (error) {
+                console.error('註冊錯誤:', error);
+                alert('註冊時發生錯誤，請稍後再試');
+            }
+        }
+
+        function continueAsGuest() {
+            isLoggedIn = false;
+            currentUser = null;
+            
+            // 顯示聊天界面但不顯示用戶信息欄
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('exampleQuestions').style.display = 'block';
+            hideUserInfo();
+            
+            // 創建會話
+            createChatSession();
+            
+            addMessage('您正以訪客身份使用，學習進度將不會被保存。');
+        }
+
+        function showChatInterface() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('exampleQuestions').style.display = 'block';
+            
+            // 顯示用戶信息欄
+            showUserInfo();
+            
+            // 創建會話
+            createChatSession();
+        }
+
+        function showUserInfo() {
+            if (currentUser && isLoggedIn) {
+                const userInfoBar = document.getElementById('userInfoBar');
+                const userDisplayName = document.getElementById('userDisplayName');
+                const userAvatar = document.getElementById('userAvatar');
+                const userStatus = document.getElementById('userStatus');
+                
+                userDisplayName.textContent = currentUser.username;
+                userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
+                userStatus.textContent = '已登入 • 學習進度已追蹤';
+                
+                userInfoBar.classList.remove('hidden');
+            }
+        }
+
+        function hideUserInfo() {
+            const userInfoBar = document.getElementById('userInfoBar');
+            userInfoBar.classList.add('hidden');
+        }
+
+        function logoutUser() {
+            // 確認登出
+            if (confirm('確定要登出嗎？您的學習進度已保存。')) {
+                // 清除用戶資料
+                currentUser = null;
+                isLoggedIn = false;
+                currentSessionId = null;
+                
+                // 清除本地存儲
+                localStorage.removeItem('currentUser');
+                
+                // 隱藏用戶信息欄
+                hideUserInfo();
+                
+                // 重置到初始狀態
+                resetToInitialState();
+                
+                // 顯示登出訊息
+                setTimeout(() => {
+                    addMessage('您已成功登出。感謝使用統計學 AI 教學助理！');
+                }, 100);
+            }
+        }
+
+        function resetToInitialState() {
+            // 清除聊天區域
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+            
+            // 重新創建初始的歡迎界面（使用原始的 HTML 結構）
+            const welcomeHTML = `
+                <!-- 歡迎訊息 -->
+                <div class="text-center py-8" id="welcomeSection">
+                    <div class="glass-dark rounded-2xl p-6 mb-6 mx-auto max-w-md animate-scaleIn animate-delay-500">
+                        <div class="text-2xl mb-3 animate-pulse-slow">👋</div>
+                        <p class="text-slate-200 leading-relaxed animate-fadeInUp animate-delay-600">
+                            歡迎使用統計學 AI 教學助理！<br>
+                            我可以幫助您解答統計學相關的問題，包括描述統計、推論統計、假設檢定等主題。
+                        </p>
+                    </div>
+                    
+                    <!-- 用戶登入區域 -->
+                    <div class="mb-6 animate-fadeInUp animate-delay-600" id="loginSection">
+                        <div class="glass-dark rounded-2xl p-6 max-w-md mx-auto">
+                            <h3 class="text-slate-200 text-lg font-medium mb-4 text-center">
+                                🔐 登入以追蹤學習進度
+                            </h3>
+                            <div class="space-y-3">
+                                <input type="text" id="usernameInput" placeholder="輸入用戶名" 
+                                       class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm">
+                                <div class="flex gap-2">
+                                    <button onclick="loginUser()" 
+                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                        登入
+                                    </button>
+                                    <button onclick="registerUser()" 
+                                            class="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                        註冊
+                                    </button>
+                                </div>
+                                <button onclick="continueAsGuest()" 
+                                        class="w-full text-slate-400 hover:text-slate-300 text-sm py-2 transition-colors">
+                                    以訪客身份繼續
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 範例問題 -->
+                    <div class="grid gap-3 max-w-2xl mx-auto animate-fadeInUp animate-delay-700" id="exampleQuestions" style="display: none;">
+                        <h3 class="text-slate-300 text-sm font-medium mb-2 flex items-center justify-center gap-2">
+                            <span class="animate-pulse-slow">💡</span> 點擊下方範例開始對話
+                        </h3>
+                        
+                        <div class="grid gap-2 md:grid-cols-2">
+                            <button onclick="askExample('什麼是標準差？如何計算？')" 
+                                    class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-100">
+                                什麼是標準差？如何計算？
+                            </button>
+                            <button onclick="askExample('請解釋中央極限定理')" 
+                                    class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-200">
+                                請解釋中央極限定理
+                            </button>
+                            <button onclick="askExample('如何進行t檢定？')" 
+                                    class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-300">
+                                如何進行t檢定？
+                            </button>
+                            <button onclick="askExample('什麼時候使用卡方檢定？')" 
+                                    class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-400">
+                                什麼時候使用卡方檢定？
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.innerHTML = welcomeHTML;
+        }
+
+        function showLoginInterface() {
+            // 隱藏範例問題
+            const exampleQuestions = document.getElementById('exampleQuestions');
+            if (exampleQuestions) {
+                exampleQuestions.style.display = 'none';
+            }
+            
+            // 確保登入界面在聊天記錄中顯示
+            // clearChatHistory() 函數已經處理了這個邏輯
+        }
+
+        function clearChatHistory() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+            
+            // 重新添加歡迎區域和登入界面
+            const welcomeSection = document.createElement('div');
+            welcomeSection.className = 'text-center py-8';
+            welcomeSection.id = 'welcomeSection';
+            welcomeSection.innerHTML = `
+                <div class="glass-dark rounded-2xl p-6 mb-6 mx-auto max-w-md animate-scaleIn animate-delay-500">
+                    <div class="text-2xl mb-3 animate-pulse-slow">👋</div>
+                    <p class="text-slate-200 leading-relaxed animate-fadeInUp animate-delay-600">
+                        歡迎使用統計學 AI 教學助理！<br>
+                        我可以幫助您解答統計學相關的問題，包括描述統計、推論統計、假設檢定等主題。
+                    </p>
+                </div>
+                
+                <!-- 用戶登入區域 -->
+                <div class="mb-6 animate-fadeInUp animate-delay-600" id="loginSection">
+                    <div class="glass-dark rounded-2xl p-6 max-w-md mx-auto">
+                        <h3 class="text-slate-200 text-lg font-medium mb-4 text-center">
+                            🔐 登入以追蹤學習進度
+                        </h3>
+                        <div class="space-y-3">
+                            <input type="text" id="usernameInputNew" placeholder="輸入用戶名" 
+                                   class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                                   onkeypress="handleLoginKeyPress(event)">
+                            <div class="flex gap-2">
+                                <button id="loginBtnNew" 
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                    登入
+                                </button>
+                                <button id="registerBtnNew" 
+                                        class="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                    註冊
+                                </button>
+                            </div>
+                            <button id="guestBtnNew" 
+                                    class="w-full text-slate-400 hover:text-slate-300 text-sm py-2 transition-colors">
+                                以訪客身份繼續
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(welcomeSection);
+            
+            // 綁定新創建的登入界面事件
+            bindLoginEvents();
+        }
+
+        function bindLoginEvents() {
+            // 綁定登入按鈕事件
+            const loginBtn = document.getElementById('loginBtnNew');
+            const registerBtn = document.getElementById('registerBtnNew');
+            const guestBtn = document.getElementById('guestBtnNew');
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', loginUserFromNew);
+            }
+            
+            if (registerBtn) {
+                registerBtn.addEventListener('click', registerUserFromNew);
+            }
+            
+            if (guestBtn) {
+                guestBtn.addEventListener('click', continueAsGuest);
+            }
+        }
+
+        function handleLoginKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                loginUserFromNew();
+            }
+        }
+
+        async function loginUserFromNew() {
+            const username = document.getElementById('usernameInputNew').value.trim();
+            if (!username) {
+                alert('請輸入用戶名');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    isLoggedIn = true;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showChatInterface();
+                    addMessage(`歡迎回來，${currentUser.username}！您的學習進度將被記錄。`);
+                } else {
+                    console.error('登入失敗:', data.error);
+                    alert(data.error || '登入失敗，請稍後再試');
+                }
+            } catch (error) {
+                console.error('登入錯誤:', error);
+                alert('登入時發生錯誤，請稍後再試');
+            }
+        }
+
+        async function registerUserFromNew() {
+            const username = document.getElementById('usernameInputNew').value.trim();
+            if (!username) {
+                alert('請輸入用戶名');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    isLoggedIn = true;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showChatInterface();
+                    addMessage(`歡迎，${currentUser.username}！您的帳戶已創建，學習進度將被追蹤。`);
+                } else {
+                    console.error('註冊失敗:', data.error);
+                    alert(data.error || '註冊失敗，請稍後再試');
+                }
+            } catch (error) {
+                console.error('註冊錯誤:', error);
+                alert('註冊時發生錯誤，請稍後再試');
+            }
+        }
+
+        async function createChatSession() {
+            try {
+                // 生成新的會話 ID
+                const newSessionId = generateSessionId();
+                
+                const response = await fetch(`${API_BASE_URL}/chat/session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': newSessionId
+                    },
+                    body: JSON.stringify({
+                        userId: currentUser?.user_id || null
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    console.log('會話創建成功:', currentSessionId);
+                } else {
+                    console.error('創建會話失敗:', data.error);
+                    // 如果會話創建失敗，使用本地生成的 ID
+                    currentSessionId = newSessionId;
+                }
+            } catch (error) {
+                console.error('創建會話錯誤:', error);
+                // 如果網路錯誤，使用本地生成的 ID
+                currentSessionId = generateSessionId();
+            }
+        }
+
+        function generateSessionId() {
+            // 生成符合 UUID v4 格式的 ID
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function askExample(question) {
+            messageInput.value = question;
+            sendMessage();
+        }
+
+        function addMessage(content, isUser = false) {
+            // 移除歡迎區域（如果存在）
+            if (welcomeSection) {
+                welcomeSection.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${isUser ? 'flex justify-end' : 'flex justify-start'} message-bubble`;
+            
+            const bubbleClass = isUser 
+                ? 'bg-blue-600/90 text-white ml-auto' 
+                : 'glass-dark text-slate-200 mr-auto';
+            
+            // 處理 Markdown 內容
+            let processedContent;
+            if (isUser) {
+                // 用戶消息保持純文字
+                processedContent = `<div class="text-sm md:text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(content)}</div>`;
+            } else {
+                // AI 回應使用 Markdown 渲染，並預處理數學公式
+                let preprocessedContent = preprocessMath(content);
+                const markdownHtml = marked.parse(preprocessedContent);
+                processedContent = `<div class="text-sm md:text-base markdown-content tex2jax_process">${markdownHtml}</div>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl px-6 py-4 ${bubbleClass} shadow-sm">
+                    ${processedContent}
+                </div>
+            `;
+            
+            // 如果是 AI 回應，進行代碼高亮和數學公式渲染
+            if (!isUser) {
+                // 先添加到 DOM
+                messagesContainer.appendChild(messageDiv);
+                
+                // 代碼高亮（檢查 hljs 是否可用）
+                if (typeof hljs !== 'undefined') {
+                    messageDiv.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }
+                
+                // 數學公式渲染 - 使用更可靠的方法
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        window.MathJax.typesetPromise([messageDiv]).then(() => {
+                            console.log('MathJax rendered successfully');
+                        }).catch((err) => {
+                            console.error('MathJax typeset error:', err);
+                            // 如果 MathJax 失敗，嘗試手動處理
+                            fallbackMathRender(messageDiv);
+                        });
+                    } else {
+                        // MathJax 還未加載，使用備用方案
+                        fallbackMathRender(messageDiv);
+                    }
+                }, 100);
+            } else {
+                messagesContainer.appendChild(messageDiv);
+            }
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // HTML 轉義函數
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 數學公式預處理函數
+        function preprocessMath(content) {
+            // 將方括號包圍的LaTeX公式轉換為MathJax標準格式
+            return content.replace(/\[([^\[\]]*\\[^\[\]]*)\]/g, (match, formula) => {
+                // 檢查是否確實包含LaTeX語法
+                if (formula.includes('\\')) {
+                    return `$$${formula}$$`;
+                }
+                return match; // 如果不包含LaTeX語法，保持原樣
+            });
+        }
+
+        // 備用數學公式渲染函數
+        function fallbackMathRender(element) {
+            console.log('Using fallback math rendering');
+            
+            // 簡單的 LaTeX 符號替換
+            const mathReplacements = [
+                { pattern: /\\frac\{([^}]+)\}\{([^}]+)\}/g, replacement: '<span style="display: inline-block; text-align: center; vertical-align: middle;"><span style="display: block; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; font-size: 0.9em;">$1</span><span style="display: block; padding-top: 2px; font-size: 0.9em;">$2</span></span>' },
+                { pattern: /\\text\{([^}]+)\}/g, replacement: '$1' },
+                { pattern: /\\sum/g, replacement: '∑' },
+                { pattern: /\\sqrt\{([^}]+)\}/g, replacement: '√($1)' },
+                { pattern: /\^2/g, replacement: '²' },
+                { pattern: /\^3/g, replacement: '³' },
+                { pattern: /\\mu/g, replacement: 'μ' },
+                { pattern: /\\sigma/g, replacement: 'σ' },
+                { pattern: /\\alpha/g, replacement: 'α' },
+                { pattern: /\\beta/g, replacement: 'β' },
+                { pattern: /\\chi/g, replacement: 'χ' },
+                { pattern: /\\bar\{([^}]+)\}/g, replacement: '$1̄' },
+                { pattern: /\\overline\{([^}]+)\}/g, replacement: '$1̄' }
+            ];
+            
+            const textNodes = [];
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let node;
+            while (node = walker.nextNode()) {
+                textNodes.push(node);
+            }
+            
+            textNodes.forEach(textNode => {
+                let content = textNode.textContent;
+                let hasLaTeX = false;
+                
+                // 檢查是否包含 LaTeX 語法或方括號包圍的公式
+                if (content.includes('\\') || content.includes('^') || content.includes('_') || 
+                    /\[.*\\.*\]/.test(content)) {
+                    hasLaTeX = true;
+                    
+                    // 處理方括號包圍的公式
+                    content = content.replace(/\[([^\[\]]*\\[^\[\]]*)\]/g, (match, formula) => {
+                        // 對方括號內的公式進行處理
+                        let processedFormula = formula;
+                        mathReplacements.forEach(replacement => {
+                            processedFormula = processedFormula.replace(replacement.pattern, replacement.replacement);
+                        });
+                        
+                        // 處理下標和上標
+                        processedFormula = processedFormula.replace(/_\{([^}]+)\}/g, '<sub>$1</sub>');
+                        processedFormula = processedFormula.replace(/_([a-zA-Z0-9])/g, '<sub>$1</sub>');
+                        processedFormula = processedFormula.replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>');
+                        
+                        return `<span style="display: block; margin: 0.5rem 0; text-align: center; font-size: 1.1em; background: rgba(51, 65, 85, 0.3); padding: 0.5rem; border-radius: 0.5rem;">${processedFormula}</span>`;
+                    });
+                    
+                    // 處理其他LaTeX語法
+                    mathReplacements.forEach(replacement => {
+                        content = content.replace(replacement.pattern, replacement.replacement);
+                    });
+                    
+                    // 處理下標
+                    content = content.replace(/_\{([^}]+)\}/g, '<sub>$1</sub>');
+                    content = content.replace(/_([a-zA-Z0-9])/g, '<sub>$1</sub>');
+                    
+                    // 處理上標
+                    content = content.replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>');
+                }
+                
+                if (hasLaTeX && content !== textNode.textContent) {
+                    const span = document.createElement('span');
+                    span.innerHTML = content;
+                    span.style.fontFamily = 'serif';
+                    span.style.color = '#e2e8f0';
+                    textNode.parentNode.replaceChild(span, textNode);
+                }
+            });
+        }
+
+        function showLoading() {
+            loadingElement.classList.remove('hidden');
+            loadingElement.classList.add('flex');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideLoading() {
+            loadingElement.classList.add('hidden');
+            loadingElement.classList.remove('flex');
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // 添加用戶訊息
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            // 禁用發送按鈕和輸入框
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+            
+            // 顯示載入動畫
+            showLoading();
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // 如果有會話 ID，添加到 headers
+                if (currentSessionId) {
+                    headers['X-Session-ID'] = currentSessionId;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/chat/message`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: message,
+                        userId: currentUser?.user_id || null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API請求失敗: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    hideLoading();
+                    addMessage(data.response);
+                    
+                    // 顯示檢測到的概念（如果有）
+                    if (data.concepts && data.concepts.length > 0) {
+                        console.log('檢測到的統計概念:', data.concepts);
+                        showConceptTags(data.concepts);
+                    }
+                    
+                    // 更新會話 ID（如果返回了新的）
+                    if (data.sessionId) {
+                        currentSessionId = data.sessionId;
+                    }
+                } else {
+                    throw new Error(data.error || 'API回應錯誤');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoading();
+                addMessage('抱歉，發生了錯誤。請稍後再試。\n錯誤詳情：' + error.message);
+            } finally {
+                // 重新啟用發送按鈕和輸入框
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // 顯示概念標籤
+        function showConceptTags(concepts) {
+            if (concepts.length === 0) return;
+            
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'flex flex-wrap gap-2 mb-4 justify-center';
+            
+            concepts.forEach(concept => {
+                const tag = document.createElement('span');
+                tag.className = 'px-3 py-1 bg-blue-600/30 text-blue-200 rounded-full text-xs border border-blue-500/30';
+                tag.textContent = `📊 ${concept}`;
+                tagsDiv.appendChild(tag);
+            });
+            
+            messagesContainer.appendChild(tagsDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 頁面載入完成後初始化
+        window.addEventListener('load', () => {
+            // 檢查是否有保存的用戶信息
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    isLoggedIn = true;
+                    showChatInterface();
+                    addMessage(`歡迎回來，${currentUser.username}！您的學習進度將繼續被追蹤。`);
+                } catch (error) {
+                    console.error('解析保存的用戶信息失敗:', error);
+                    localStorage.removeItem('currentUser');
+                }
+            }
+            
+            messageInput.focus();
+            
+            // 配置 marked.js
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false
+            });
+            
+            // 配置 highlight.js（檢查是否載入成功）
+            if (typeof hljs !== 'undefined') {
+                hljs.configure({
+                    languages: ['javascript', 'python', 'r', 'sql', 'bash', 'json', 'markdown']
+                });
+                console.log('Highlight.js 配置成功');
+            } else {
+                console.warn('Highlight.js 未載入，將跳過代碼高亮功能');
+            }
+            
+            // 等待 MathJax 載入完成
+            setTimeout(() => {
+                if (window.MathJax && window.MathJax.startup) {
+                    MathJax.startup.promise.then(() => {
+                        console.log('MathJax is ready');
+                        window.mathJaxReady = true;
+                    }).catch((err) => {
+                        console.error('MathJax startup error:', err);
+                        window.mathJaxReady = false;
+                    });
+                } else {
+                    console.warn('MathJax not loaded, using fallback rendering');
+                    window.mathJaxReady = false;
+                }
+            }, 2000);
+        });
+
+        // 暗色主題互動效果
+        messageInput.addEventListener('focus', () => {
+            messageInput.style.borderColor = 'rgb(96, 165, 250)';
+        });
+
+        messageInput.addEventListener('blur', () => {
+            messageInput.style.borderColor = 'rgba(71, 85, 105, 0.6)';
+        });
+    </script>
+</body>
+</html>
