@@ -150,6 +150,8 @@ router.post('/message', async (req, res) => {
         await db.saveMessage(userMessageData);
         
         // 調用 FastGPT API
+        // 注意：提示詞已移至 FastGPT 平台配置，避免衝突
+        // 檢測到的概念會作為元數據傳遞，但主要提示詞由 FastGPT 控制
         const response = await fetch(`${FASTGPT_API_BASE_URL}/v1/chat/completions`, {
             method: 'POST',
             headers: {
@@ -159,22 +161,6 @@ router.post('/message', async (req, res) => {
             body: JSON.stringify({
                 model: 'gpt-3.5-turbo',
                 messages: [
-                    {
-                        role: 'system',
-                        content: `你是一位專業的統計學教學助理，專門幫助心理學系學生理解 PSY2032 統計方法課程。請遵循以下原則：
-
-1. 使用繁體中文回答
-2. 提供清晰、準確且易懂的解釋
-3. 使用蘇格拉底式提問法引導學習
-4. 結合心理學實例說明統計概念
-5. 適時提供練習建議
-6. 注重統計倫理和批判性思維
-7. 根據學生程度調整解釋深度
-
-當前檢測到的統計概念: ${concepts.join(', ') || '無特定概念'}
-
-請針對學生的問題提供有幫助的回答，並在適當時候提出引導性問題。`
-                    },
                     {
                         role: 'user',
                         content: message
