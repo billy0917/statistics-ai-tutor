@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計學練習系統 - PSY2032</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+        }
+
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .option-btn.correct {
+            background-color: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .option-btn.incorrect {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .option-btn.selected {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .difficulty-basic {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .difficulty-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .difficulty-advanced {
+            background-color: #fce7f3;
+            color: #9f1239;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- 標題區 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-3xl font-bold text-gray-800">📚 統計學練習系統</h1>
+                <a href="/" class="text-blue-600 hover:text-blue-800 transition">
+                    返回聊天
+                </a>
+            </div>
+            <p class="text-gray-600">選擇概念和難度，開始你的練習之旅！</p>
+            
+            <!-- 用戶信息顯示區 -->
+            <div id="userInfoArea" class="mt-4 hidden">
+                <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <span class="text-2xl">👤</span>
+                    <div class="flex-1">
+                        <div class="font-semibold text-gray-800" id="displayUserName"></div>
+                        <div class="text-sm text-gray-600">學習進度已追蹤</div>
+                    </div>
+                    <span class="text-sm text-green-600 font-medium">✓ 已登入</span>
+                </div>
+            </div>
+            
+            <!-- 未登入提示區 -->
+            <div id="notLoggedInArea" class="mt-4 hidden">
+                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">⚠️</span>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-800">需要登入才能使用練習系統</div>
+                            <div class="text-sm text-gray-600">請先在主頁面登入，以便追蹤您的學習進度</div>
+                        </div>
+                    </div>
+                    <a href="/" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                        前往登入 →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+                <!-- 概念選擇 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">統計概念</label>
+                    <select id="conceptSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">選擇概念...</option>
+                        <option value="描述統計">描述統計</option>
+                        <option value="標準差">標準差</option>
+                        <option value="單樣本t檢定">單樣本t檢定</option>
+                        <option value="獨立樣本t檢定">獨立樣本t檢定</option>
+                        <option value="配對樣本t檢定">配對樣本t檢定</option>
+                        <option value="相關分析">相關分析</option>
+                        <option value="簡單迴歸">簡單迴歸</option>
+                        <option value="卡方檢定">卡方檢定</option>
+                    </select>
+                </div>
+
+                <!-- 難度選擇 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">難度級別</label>
+                    <select id="difficultySelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="basic">基礎 (Basic)</option>
+                        <option value="medium">中級 (Medium)</option>
+                        <option value="advanced">進階 (Advanced)</option>
+                    </select>
+                </div>
+
+                <!-- 題型選擇 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">題型</label>
+                    <select id="typeSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="multiple_choice">選擇題 (MC)</option>
+                        <option value="case_study">案例分析</option>
+                        <option value="calculation">計算題</option>
+                        <option value="interpretation">解釋題</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="generateBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-lg">
+                    🎯 生成新題目
+                </button>
+                <button id="loadBtn" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition shadow-lg">
+                    📖 從題庫載入
+                </button>
+            </div>
+        </div>
+
+        <!-- 進度統計區 -->
+        <div id="statsArea" class="glass rounded-2xl p-6 mb-6 fade-in hidden">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📊 練習統計</h3>
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-3xl font-bold text-blue-600" id="totalCount">0</div>
+                    <div class="text-sm text-gray-600">總題數</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-3xl font-bold text-green-600" id="correctCount">0</div>
+                    <div class="text-sm text-gray-600">答對</div>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <div class="text-3xl font-bold text-red-600" id="incorrectCount">0</div>
+                    <div class="text-sm text-gray-600">答錯</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-3xl font-bold text-purple-600" id="accuracy">0%</div>
+                    <div class="text-sm text-gray-600">正確率</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 題目顯示區 -->
+        <div id="questionArea" class="glass rounded-2xl p-8 mb-6 fade-in hidden">
+            <!-- 題目標題 -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="difficulty-badge" id="difficultyBadge">基礎</span>
+                    <span class="text-sm text-gray-600" id="questionType">選擇題</span>
+                    <span class="text-sm text-gray-600" id="conceptName">描述統計</span>
+                </div>
+                <button id="skipBtn" class="text-gray-500 hover:text-gray-700 transition">
+                    跳過 →
+                </button>
+            </div>
+
+            <!-- 題目內容 -->
+            <div class="mb-6">
+                <div class="text-lg font-medium text-gray-800 mb-4" id="questionText">
+                    載入中...
+                </div>
+            </div>
+
+            <!-- 選擇題選項 -->
+            <div id="optionsArea" class="space-y-3 mb-6"></div>
+
+            <!-- 開放式答案輸入 -->
+            <div id="answerInputArea" class="mb-6 hidden">
+                <textarea id="answerInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="請輸入你的答案..."></textarea>
+            </div>
+
+            <!-- 提交按鈕 -->
+            <div class="flex gap-3">
+                <button id="submitBtn" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    提交答案
+                </button>
+                <button id="hintBtn" class="bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition shadow-lg">
+                    💡 提示
+                </button>
+            </div>
+
+            <!-- 反饋區 -->
+            <div id="feedbackArea" class="mt-6 hidden"></div>
+
+            <!-- 解釋區 -->
+            <div id="explanationArea" class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded hidden">
+                <h4 class="font-semibold text-blue-900 mb-2">📖 詳細解釋</h4>
+                <div id="explanationText" class="text-gray-700"></div>
+            </div>
+
+            <!-- 下一題按鈕 -->
+            <div id="nextBtnArea" class="mt-6 hidden">
+                <button id="nextBtn" class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition shadow-lg">
+                    下一題 →
+                </button>
+            </div>
+        </div>
+
+        <!-- 載入動畫 -->
+        <div id="loadingArea" class="glass rounded-2xl p-12 text-center hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">正在生成題目...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = null;
+        let selectedAnswer = null;
+        let startTime = null;
+        let currentUser = null;
+        let isLoggedIn = false;
+        let stats = {
+            total: 0,
+            correct: 0,
+            incorrect: 0
+        };
+
+        // DOM 元素
+        const conceptSelect = document.getElementById('conceptSelect');
+        const difficultySelect = document.getElementById('difficultySelect');
+        const typeSelect = document.getElementById('typeSelect');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const questionArea = document.getElementById('questionArea');
+        const loadingArea = document.getElementById('loadingArea');
+        const statsArea = document.getElementById('statsArea');
+        const submitBtn = document.getElementById('submitBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const userInfoArea = document.getElementById('userInfoArea');
+        const notLoggedInArea = document.getElementById('notLoggedInArea');
+        const displayUserName = document.getElementById('displayUserName');
+
+        // 初始化用戶信息（從主頁面的登錄狀態）
+        function initUser() {
+            // 從 localStorage 獲取用戶信息（與 AI 對話頁面共用）
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    isLoggedIn = true;
+                    
+                    // 顯示用戶信息
+                    displayUserName.textContent = currentUser.username;
+                    userInfoArea.classList.remove('hidden');
+                    notLoggedInArea.classList.add('hidden');
+                    
+                    console.log('✅ 用戶已登入:', currentUser.username, 'ID:', currentUser.user_id);
+                } catch (error) {
+                    console.error('解析用戶信息失敗:', error);
+                    showNotLoggedIn();
+                }
+            } else {
+                // 未登入
+                showNotLoggedIn();
+            }
+        }
+
+        // 顯示未登入提示
+        function showNotLoggedIn() {
+            isLoggedIn = false;
+            currentUser = null;
+            userInfoArea.classList.add('hidden');
+            notLoggedInArea.classList.remove('hidden');
+            
+            // 禁用練習功能
+            generateBtn.disabled = true;
+            loadBtn.disabled = true;
+            generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        // 頁面載入時初始化
+        initUser();
+
+        // 生成新題目
+        generateBtn.addEventListener('click', async () => {
+            // 檢查用戶是否已登入
+            if (!isLoggedIn || !currentUser) {
+                alert('請先登入！');
+                window.location.href = '/';
+                return;
+            }
+            
+            const concept = conceptSelect.value;
+            if (!concept) {
+                alert('請選擇統計概念！');
+                return;
+            }
+
+            const difficulty = difficultySelect.value;
+            const questionType = typeSelect.value;
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/practice/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        concept,
+                        difficulty,
+                        questionType,
+                        saveToDatabase: true
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentQuestion = data.question;
+                    displayQuestion(currentQuestion);
+                    startTime = Date.now();
+                } else {
+                    alert('生成題目失敗：' + data.error);
+                    hideLoading();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('生成題目時發生錯誤');
+                hideLoading();
+            }
+        });
+
+        // 從題庫載入
+        loadBtn.addEventListener('click', async () => {
+            // 檢查用戶是否已登入
+            if (!isLoggedIn || !currentUser) {
+                alert('請先登入！');
+                window.location.href = '/';
+                return;
+            }
+            
+            const concept = conceptSelect.value;
+            const difficulty = difficultySelect.value;
+            const questionType = typeSelect.value;
+
+            showLoading();
+
+            try {
+                let url = '/api/practice/questions?limit=1';
+                if (concept) url += `&concept=${concept}`;
+                if (difficulty) url += `&difficulty=${difficulty}`;
+                if (questionType) url += `&questionType=${questionType}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success && data.questions.length > 0) {
+                    currentQuestion = data.questions[0];
+                    displayQuestion(currentQuestion);
+                    startTime = Date.now();
+                } else {
+                    alert('題庫中沒有符合條件的題目，請嘗試生成新題目');
+                    hideLoading();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('載入題目時發生錯誤');
+                hideLoading();
+            }
+        });
+
+        // 顯示題目
+        function displayQuestion(question) {
+            hideLoading();
+            questionArea.classList.remove('hidden');
+            statsArea.classList.remove('hidden');
+
+            // 重置狀態
+            selectedAnswer = null;
+            document.getElementById('feedbackArea').classList.add('hidden');
+            document.getElementById('explanationArea').classList.add('hidden');
+            document.getElementById('nextBtnArea').classList.add('hidden');
+            submitBtn.disabled = false;
+
+            // 設置題目資訊
+            document.getElementById('questionText').textContent = question.question_text;
+            document.getElementById('conceptName').textContent = question.concept_name;
+            
+            // 難度標籤
+            const difficultyBadge = document.getElementById('difficultyBadge');
+            const difficultyNames = { 1: '基礎', 2: '中級', 3: '進階' };
+            const difficultyClasses = { 1: 'difficulty-basic', 2: 'difficulty-medium', 3: 'difficulty-advanced' };
+            difficultyBadge.textContent = difficultyNames[question.difficulty_level];
+            difficultyBadge.className = 'difficulty-badge ' + difficultyClasses[question.difficulty_level];
+
+            // 題型
+            const typeNames = {
+                'multiple_choice': '選擇題 (MC)',
+                'case_study': '案例分析',
+                'calculation': '計算題',
+                'interpretation': '解釋題'
+            };
+            document.getElementById('questionType').textContent = typeNames[question.question_type];
+
+            // 顯示選項或輸入框
+            const optionsArea = document.getElementById('optionsArea');
+            const answerInputArea = document.getElementById('answerInputArea');
+
+            if (question.question_type === 'multiple_choice' && question.options) {
+                optionsArea.innerHTML = '';
+                optionsArea.classList.remove('hidden');
+                answerInputArea.classList.add('hidden');
+
+                const options = typeof question.options === 'string' ? JSON.parse(question.options) : question.options;
+                options.forEach((option, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn w-full text-left px-6 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition';
+                    btn.innerHTML = `<span class="font-semibold">${String.fromCharCode(65 + index)}.</span> ${option}`;
+                    btn.onclick = () => selectOption(btn, option);
+                    optionsArea.appendChild(btn);
+                });
+            } else {
+                optionsArea.classList.add('hidden');
+                answerInputArea.classList.remove('hidden');
+                document.getElementById('answerInput').value = '';
+            }
+
+            // 渲染 MathJax
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // 選擇選項
+        function selectOption(btn, answer) {
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.classList.remove('selected');
+            });
+            btn.classList.add('selected');
+            selectedAnswer = answer;
+        }
+
+        // 提交答案
+        submitBtn.addEventListener('click', async () => {
+            let userAnswer;
+            
+            if (currentQuestion.question_type === 'multiple_choice') {
+                userAnswer = selectedAnswer;
+            } else {
+                userAnswer = document.getElementById('answerInput').value.trim();
+            }
+
+            if (!userAnswer) {
+                alert('請先選擇或輸入答案！');
+                return;
+            }
+
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+
+            try {
+                const response = await fetch('/api/practice/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        questionId: currentQuestion.question_id,
+                        userAnswer,
+                        timeTaken,
+                        userId: currentUser?.user_id || null,  // 使用登入的用戶 ID
+                        sessionId: null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showFeedback(data.isCorrect, data.feedback, data.explanation);
+                    updateStats(data.isCorrect);
+                    submitBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('提交答案時發生錯誤');
+            }
+        });
+
+        // 顯示反饋
+        function showFeedback(isCorrect, feedback, explanation) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            const explanationArea = document.getElementById('explanationArea');
+            const nextBtnArea = document.getElementById('nextBtnArea');
+
+            feedbackArea.className = `mt-6 p-4 rounded-lg ${isCorrect ? 'bg-green-50 border-l-4 border-green-500' : 'bg-red-50 border-l-4 border-red-500'}`;
+            feedbackArea.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-2xl">${isCorrect ? '✅' : '❌'}</span>
+                    <span class="font-semibold ${isCorrect ? 'text-green-900' : 'text-red-900'}">${feedback}</span>
+                </div>
+            `;
+            feedbackArea.classList.remove('hidden');
+
+            document.getElementById('explanationText').innerHTML = explanation;
+            explanationArea.classList.remove('hidden');
+
+            nextBtnArea.classList.remove('hidden');
+
+            // 標記選項
+            if (currentQuestion.question_type === 'multiple_choice') {
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    const optionText = btn.textContent.substring(3).trim();
+                    if (optionText === currentQuestion.correct_answer) {
+                        btn.classList.add('correct');
+                    } else if (optionText === selectedAnswer && !isCorrect) {
+                        btn.classList.add('incorrect');
+                    }
+                    btn.onclick = null;
+                });
+            }
+        }
+
+        // 更新統計
+        function updateStats(isCorrect) {
+            stats.total++;
+            if (isCorrect) {
+                stats.correct++;
+            } else {
+                stats.incorrect++;
+            }
+
+            document.getElementById('totalCount').textContent = stats.total;
+            document.getElementById('correctCount').textContent = stats.correct;
+            document.getElementById('incorrectCount').textContent = stats.incorrect;
+            document.getElementById('accuracy').textContent = Math.round((stats.correct / stats.total) * 100) + '%';
+        }
+
+        // 下一題
+        nextBtn.addEventListener('click', () => {
+            generateBtn.click();
+        });
+
+        // 跳過
+        skipBtn.addEventListener('click', () => {
+            if (confirm('確定要跳過這題嗎？')) {
+                generateBtn.click();
+            }
+        });
+
+        // 提示
+        hintBtn.addEventListener('click', () => {
+            alert('提示功能開發中...\n\n可以考慮：\n1. 回顧知識庫內容\n2. 思考相關概念\n3. 檢查計算步驟');
+        });
+
+        // 顯示/隱藏載入動畫
+        function showLoading() {
+            loadingArea.classList.remove('hidden');
+            questionArea.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            loadingArea.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+
+

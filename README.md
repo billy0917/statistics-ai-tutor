@@ -6,6 +6,11 @@
 
 ### 核心功能
 - **智能對話系統**：基於 FastGPT API 的專業統計學問答
+- **📚 練習題系統**：利用 FastGPT 知識庫生成個性化練習題（⭐ 新功能）
+  - 支援 3 種難度（Basic/Medium/Advanced）
+  - 支援 4 種題型（MC、案例分析、計算題、解釋題）
+  - 涵蓋 8 大統計概念
+  - 自動批改與詳細解釋
 - **學習進度追蹤**：記錄用戶學習歷程和概念掌握度
 - **個性化學習**：根據用戶表現調整難度和內容
 - **統計概念識別**：自動檢測和標記對話中的統計概念
@@ -110,6 +115,16 @@ npm start
 - `POST /api/chat/message` - 發送訊息
 - `GET /api/chat/history/:sessionId` - 獲取會話歷史
 - `GET /api/chat/concepts` - 獲取統計概念列表
+
+### 練習功能 ⭐ 新增
+- `POST /api/practice/generate` - 利用 FastGPT 生成練習題
+- `GET /api/practice/questions` - 從題庫獲取練習題
+- `GET /api/practice/question/:questionId` - 獲取單個題目
+- `POST /api/practice/submit` - 提交答案並批改
+- `GET /api/practice/user-progress/:userId` - 獲取用戶練習進度
+- `GET /api/practice/concepts` - 獲取可用概念列表
+
+**詳細文檔**：查看 [PRACTICE_SYSTEM.md](PRACTICE_SYSTEM.md)
 
 ### 分析功能
 - `GET /api/analytics/overview` - 整體分析數據

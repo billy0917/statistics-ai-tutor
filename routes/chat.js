@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../config/supabase');
+const axios = require('axios');
 const router = express.Router();
 
 // UUID 驗證和生成函數
@@ -149,33 +150,24 @@ router.post('/message', async (req, res) => {
         
         await db.saveMessage(userMessageData);
         
-        // 調用 FastGPT API
-        // 注意：提示詞已移至 FastGPT 平台配置，避免衝突
-        // 檢測到的概念會作為元數據傳遞，但主要提示詞由 FastGPT 控制
-        const response = await fetch(`${FASTGPT_API_BASE_URL}/v1/chat/completions`, {
-            method: 'POST',
+        // Call FastGPT API
+        // Note: Prompts are configured in FastGPT platform to avoid conflicts
+        // Model is not specified, allowing FastGPT to use platform default
+        const response = await axios.post(`${FASTGPT_API_BASE_URL}/v1/chat/completions`, {
+            messages: [
+                {
+                    role: 'user',
+                    content: message
+                }
+            ]
+        }, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${FASTGPT_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: [
-                    {
-                        role: 'user',
-                        content: message
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 1000
-            })
+            }
         });
 
-        if (!response.ok) {
-            throw new Error(`FastGPT API 請求失敗: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const data = response.data;
         
         if (!data.choices || data.choices.length === 0) {
             throw new Error('FastGPT API 回應格式錯誤');

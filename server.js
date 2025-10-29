@@ -9,6 +9,7 @@ require('dotenv').config();
 const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/users');
 const analyticsRoutes = require('./routes/analytics');
+const practiceRoutes = require('./routes/practice');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
 app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/practice', practiceRoutes);
 
 // 健康檢查端點
 app.get('/api/health', (req, res) => {
