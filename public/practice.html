@@ -471,8 +471,9 @@
                 options.forEach((option, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'option-btn w-full text-left px-6 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition';
-                    btn.innerHTML = `<span class="font-semibold">${String.fromCharCode(65 + index)}.</span> ${option}`;
-                    btn.onclick = () => selectOption(btn, option);
+                    const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                    btn.innerHTML = `<span class="font-semibold">${optionLetter}.</span> ${option}`;
+                    btn.onclick = () => selectOption(btn, optionLetter); // 只傳遞字母，不傳遞完整文本
                     optionsArea.appendChild(btn);
                 });
             } else {
