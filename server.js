@@ -32,7 +32,7 @@ app.use(helmet({
 // CORS 配置
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://your-domain.vercel.app'] 
+        ? (process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : true)
         : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
 }));
@@ -83,6 +83,11 @@ app.get('/api/health', (req, res) => {
 // 主頁路由
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/statistics-ai-tutor.html');
+});
+
+// 練習系統頁面路由
+app.get('/practice.html', (req, res) => {
+    res.sendFile(__dirname + '/public/practice.html');
 });
 
 // 404 處理
