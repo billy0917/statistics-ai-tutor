@@ -105,12 +105,14 @@ JSON format example:
     "question_text": "Question content (must include psychology context)",
     "question_type": "${questionType}",
     "options": ${questionType === 'multiple_choice' ? '["Option A", "Option B", "Option C", "Option D"]' : 'null'},
-    "correct_answer": "Correct answer",
+    "correct_answer": "${questionType === 'multiple_choice' ? 'A' : 'Correct answer (for multiple choice, use ONLY the letter: A, B, C, or D)'}",
     "explanation": "Detailed explanation of why this is the correct answer",
     "difficulty_level": ${DIFFICULTY_LEVELS[difficulty]},
     "concept_name": "${concept}"
 }
 \`\`\`
+
+${questionType === 'multiple_choice' ? '**CRITICAL: For multiple choice questions, "correct_answer" must be ONLY a single letter (A, B, C, or D), NOT the full option text.**' : ''}
 
 Difficulty description: ${getDifficultyDescription(difficulty)}
 
@@ -185,6 +187,16 @@ Difficulty description: ${getDifficultyDescription(difficulty)}
             if (!questionData.question_text || !questionData.correct_answer) {
                 console.error('❌ JSON 缺少必要欄位:', questionData);
                 throw new Error('題目缺少必要欄位');
+            }
+            
+            // 清理 correct_answer：提取選項字母（處理 AI 可能返回 "D) Standard Deviation" 的情況）
+            if (questionData.question_type === 'multiple_choice') {
+                const originalAnswer = questionData.correct_answer;
+                const answerMatch = questionData.correct_answer.toString().trim().match(/^([A-D])/i);
+                if (answerMatch) {
+                    questionData.correct_answer = answerMatch[1].toUpperCase();
+                    console.log(`📌 清理答案格式: "${originalAnswer}" → "${questionData.correct_answer}"`);
+                }
             }
             
             console.log('✅ 題目解析成功:', questionData);
