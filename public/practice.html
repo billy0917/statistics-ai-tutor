@@ -13,42 +13,106 @@
     <style>
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
         }
 
+        /* 暗色主題配色方案 */
         .glass {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(71, 85, 105, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
 
-        .option-btn {
-            transition: all 0.3s ease;
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.4);
         }
 
-        .option-btn:hover {
+        /* 暗色滾動條 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.6);
+            border-radius: 3px;
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            background: rgba(51, 65, 85, 0.4);
+            border: 2px solid rgba(71, 85, 105, 0.6);
+            color: #e2e8f0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .option-btn:hover:not(.correct):not(.incorrect):not(:disabled):not(.selected) {
             transform: translateX(8px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: rgba(71, 85, 105, 0.6);
+            border-color: #60a5fa;
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+        }
+
+        .option-btn:active:not(.correct):not(.incorrect):not(:disabled):not(.selected) {
+            transform: translateX(8px) scale(0.98);
+            background: rgba(59, 130, 246, 0.4);
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .option-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
         .option-btn.correct {
             background-color: #10b981;
             color: white;
             border-color: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
 
         .option-btn.incorrect {
             background-color: #ef4444;
             color: white;
             border-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
 
         .option-btn.selected {
-            background-color: #3b82f6;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
-            border-color: #3b82f6;
+            border-color: #1d4ed8;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.6), 0 0 0 3px rgba(59, 130, 246, 0.2);
+            transform: translateX(4px);
+            font-weight: 600;
+        }
+        
+        .option-btn.selected:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateX(4px) scale(1.01);
+        }
+
+        /* 點擊動畫效果 - 簡潔流暢的單次彈性效果 */
+        @keyframes btnClick {
+            0% { 
+                transform: translateX(0) scale(1);
+            }
+            60% { 
+                transform: translateX(5px) scale(0.98);
+            }
+            100% { 
+                transform: translateX(4px) scale(1);
+            }
+        }
+
+        .option-btn.clicked {
+            animation: btnClick 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         @keyframes fadeIn {
@@ -72,53 +136,73 @@
         }
 
         .difficulty-basic {
-            background-color: #dbeafe;
-            color: #1e40af;
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.4);
         }
 
         .difficulty-medium {
-            background-color: #fef3c7;
-            color: #92400e;
+            background-color: rgba(251, 191, 36, 0.2);
+            color: #fcd34d;
+            border: 1px solid rgba(251, 191, 36, 0.4);
         }
 
         .difficulty-advanced {
-            background-color: #fce7f3;
-            color: #9f1239;
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
+<body class="min-h-screen bg-cover bg-center bg-no-repeat p-4 md:p-8" 
+      style="background-image: url('https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg');">
+    
+    <!-- 背景遮罩 -->
+    <div class="fixed inset-0 bg-black/20 -z-10"></div>
+    
+    <div class="relative max-w-4xl mx-auto">
         <!-- 標題區 -->
         <div class="glass rounded-2xl p-6 mb-6 fade-in">
             <div class="flex items-center justify-between mb-4">
-                <h1 class="text-3xl font-bold text-gray-800">📚 統計學練習系統</h1>
-                <a href="/" class="text-blue-600 hover:text-blue-800 transition">
-                    返回聊天
-                </a>
+                <h1 class="text-3xl font-bold text-slate-100">📚 統計學練習系統</h1>
+                <div class="flex gap-3">
+                    <a href="/question-bank.html" class="text-blue-400 hover:text-blue-300 transition font-medium">
+                        📖 題庫練習
+                    </a>
+                    <span class="text-slate-500">|</span>
+                    <a href="/" class="text-blue-400 hover:text-blue-300 transition">
+                        返回聊天
+                    </a>
+                </div>
             </div>
-            <p class="text-gray-600">選擇概念和難度，開始你的練習之旅！</p>
+            <p class="text-slate-300">選擇概念和難度，使用 AI 生成個性化練習題！</p>
+            <div class="mt-3 p-3 glass-dark rounded-lg border border-blue-500/30">
+                <div class="flex items-center gap-2 text-sm text-blue-200">
+                    <span>💡</span>
+                    <span><strong>新功能：</strong>想要系統化練習？試試 <a href="/question-bank.html" class="underline font-medium text-blue-300 hover:text-blue-200">題庫練習系統</a>，包含 Topic 1-10 的 60+ 道題目！</span>
+                </div>
+            </div>
             
             <!-- 用戶信息顯示區 -->
             <div id="userInfoArea" class="mt-4 hidden">
-                <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div class="flex items-center gap-3 p-3 glass-dark rounded-lg border border-green-500/30">
                     <span class="text-2xl">👤</span>
                     <div class="flex-1">
-                        <div class="font-semibold text-gray-800" id="displayUserName"></div>
-                        <div class="text-sm text-gray-600">學習進度已追蹤</div>
+                        <div class="font-semibold text-slate-100" id="displayUserName"></div>
+                        <div class="text-sm text-slate-400">學習進度已追蹤</div>
                     </div>
-                    <span class="text-sm text-green-600 font-medium">✓ 已登入</span>
+                    <span class="text-sm text-green-400 font-medium">✓ 已登入</span>
                 </div>
             </div>
             
             <!-- 未登入提示區 -->
             <div id="notLoggedInArea" class="mt-4 hidden">
-                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div class="p-4 glass-dark rounded-lg border border-yellow-500/30">
                     <div class="flex items-center gap-3 mb-3">
                         <span class="text-2xl">⚠️</span>
                         <div class="flex-1">
-                            <div class="font-semibold text-gray-800">需要登入才能使用練習系統</div>
-                            <div class="text-sm text-gray-600">請先在主頁面登入，以便追蹤您的學習進度</div>
+                            <div class="font-semibold text-slate-100">需要登入才能使用練習系統</div>
+                            <div class="text-sm text-slate-400">請先在主頁面登入，以便追蹤您的學習進度</div>
                         </div>
                     </div>
                     <a href="/" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
@@ -133,8 +217,8 @@
             <div class="grid md:grid-cols-3 gap-4 mb-4">
                 <!-- 概念選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">統計概念</label>
-                    <select id="conceptSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">統計概念</label>
+                    <select id="conceptSelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                         <option value="">選擇概念...</option>
                         <option value="描述統計">描述統計</option>
                         <option value="標準差">標準差</option>
@@ -149,8 +233,8 @@
 
                 <!-- 難度選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">難度級別</label>
-                    <select id="difficultySelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">難度級別</label>
+                    <select id="difficultySelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                         <option value="basic">基礎 (Basic)</option>
                         <option value="medium">中級 (Medium)</option>
                         <option value="advanced">進階 (Advanced)</option>
@@ -159,8 +243,8 @@
 
                 <!-- 題型選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">題型</label>
-                    <select id="typeSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">題型</label>
+                    <select id="typeSelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                         <option value="multiple_choice">選擇題 (MC)</option>
                         <option value="case_study">案例分析</option>
                         <option value="calculation">計算題</option>
@@ -173,7 +257,7 @@
                 <button id="generateBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-lg">
                     🎯 生成新題目
                 </button>
-                <button id="loadBtn" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition shadow-lg">
+                <button id="loadBtn" class="flex-1 bg-slate-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-slate-500 transition shadow-lg">
                     📖 從題庫載入
                 </button>
             </div>
@@ -181,23 +265,23 @@
 
         <!-- 進度統計區 -->
         <div id="statsArea" class="glass rounded-2xl p-6 mb-6 fade-in hidden">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">📊 練習統計</h3>
+            <h3 class="text-xl font-bold text-slate-100 mb-4">📊 練習統計</h3>
             <div class="grid md:grid-cols-4 gap-4">
-                <div class="text-center p-4 bg-blue-50 rounded-lg">
-                    <div class="text-3xl font-bold text-blue-600" id="totalCount">0</div>
-                    <div class="text-sm text-gray-600">總題數</div>
+                <div class="text-center p-4 glass-dark rounded-lg border border-blue-500/30">
+                    <div class="text-3xl font-bold text-blue-400" id="totalCount">0</div>
+                    <div class="text-sm text-slate-400">總題數</div>
                 </div>
-                <div class="text-center p-4 bg-green-50 rounded-lg">
-                    <div class="text-3xl font-bold text-green-600" id="correctCount">0</div>
-                    <div class="text-sm text-gray-600">答對</div>
+                <div class="text-center p-4 glass-dark rounded-lg border border-green-500/30">
+                    <div class="text-3xl font-bold text-green-400" id="correctCount">0</div>
+                    <div class="text-sm text-slate-400">答對</div>
                 </div>
-                <div class="text-center p-4 bg-red-50 rounded-lg">
-                    <div class="text-3xl font-bold text-red-600" id="incorrectCount">0</div>
-                    <div class="text-sm text-gray-600">答錯</div>
+                <div class="text-center p-4 glass-dark rounded-lg border border-red-500/30">
+                    <div class="text-3xl font-bold text-red-400" id="incorrectCount">0</div>
+                    <div class="text-sm text-slate-400">答錯</div>
                 </div>
-                <div class="text-center p-4 bg-purple-50 rounded-lg">
-                    <div class="text-3xl font-bold text-purple-600" id="accuracy">0%</div>
-                    <div class="text-sm text-gray-600">正確率</div>
+                <div class="text-center p-4 glass-dark rounded-lg border border-purple-500/30">
+                    <div class="text-3xl font-bold text-purple-400" id="accuracy">0%</div>
+                    <div class="text-sm text-slate-400">正確率</div>
                 </div>
             </div>
         </div>
@@ -208,17 +292,17 @@
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
                     <span class="difficulty-badge" id="difficultyBadge">基礎</span>
-                    <span class="text-sm text-gray-600" id="questionType">選擇題</span>
-                    <span class="text-sm text-gray-600" id="conceptName">描述統計</span>
+                    <span class="text-sm text-slate-300" id="questionType">選擇題</span>
+                    <span class="text-sm text-slate-300" id="conceptName">描述統計</span>
                 </div>
-                <button id="skipBtn" class="text-gray-500 hover:text-gray-700 transition">
+                <button id="skipBtn" class="text-slate-400 hover:text-slate-300 transition">
                     跳過 →
                 </button>
             </div>
 
             <!-- 題目內容 -->
             <div class="mb-6">
-                <div class="text-lg font-medium text-gray-800 mb-4" id="questionText">
+                <div class="text-lg font-medium text-slate-100 mb-4 leading-relaxed" id="questionText">
                     載入中...
                 </div>
             </div>
@@ -228,15 +312,15 @@
 
             <!-- 開放式答案輸入 -->
             <div id="answerInputArea" class="mb-6 hidden">
-                <textarea id="answerInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="請輸入你的答案..."></textarea>
+                <textarea id="answerInput" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent" rows="4" placeholder="請輸入你的答案..."></textarea>
             </div>
 
             <!-- 提交按鈕 -->
             <div class="flex gap-3">
-                <button id="submitBtn" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <button id="submitBtn" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg disabled:bg-slate-600 disabled:cursor-not-allowed">
                     提交答案
                 </button>
-                <button id="hintBtn" class="bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition shadow-lg">
+                <button id="hintBtn" class="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition shadow-lg">
                     💡 提示
                 </button>
             </div>
@@ -245,9 +329,9 @@
             <div id="feedbackArea" class="mt-6 hidden"></div>
 
             <!-- 解釋區 -->
-            <div id="explanationArea" class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded hidden">
-                <h4 class="font-semibold text-blue-900 mb-2">📖 詳細解釋</h4>
-                <div id="explanationText" class="text-gray-700"></div>
+            <div id="explanationArea" class="mt-6 p-4 glass-dark border-l-4 border-blue-500 rounded hidden">
+                <h4 class="font-semibold text-blue-300 mb-2">📖 詳細解釋</h4>
+                <div id="explanationText" class="text-slate-300"></div>
             </div>
 
             <!-- 下一題按鈕 -->
@@ -260,8 +344,8 @@
 
         <!-- 載入動畫 -->
         <div id="loadingArea" class="glass rounded-2xl p-12 text-center hidden">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p class="text-gray-600">正在生成題目...</p>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+            <p class="text-slate-300">正在生成題目...</p>
         </div>
     </div>
 
@@ -386,7 +470,7 @@
             }
         });
 
-        // 從題庫載入
+        // 從題庫載入 - 使用新的題庫 API
         loadBtn.addEventListener('click', async () => {
             // 檢查用戶是否已登入
             if (!isLoggedIn || !currentUser) {
@@ -399,12 +483,21 @@
             const difficulty = difficultySelect.value;
             const questionType = typeSelect.value;
 
+            if (!concept) {
+                alert('請先選擇統計概念！\n\n提示：或使用題庫練習系統獲得更好的體驗');
+                return;
+            }
+
             showLoading();
 
             try {
-                let url = '/api/practice/questions?limit=1';
+                // 先嘗試從題庫 API 載入
+                let url = '/api/practice/questions?limit=1&source=question_bank';
                 if (concept) url += `&concept=${concept}`;
-                if (difficulty) url += `&difficulty=${difficulty}`;
+                if (difficulty) {
+                    const diffMap = { 'basic': 1, 'medium': 2, 'advanced': 3 };
+                    url += `&difficulty=${diffMap[difficulty]}`;
+                }
                 if (questionType) url += `&questionType=${questionType}`;
 
                 const response = await fetch(url);
@@ -415,8 +508,12 @@
                     displayQuestion(currentQuestion);
                     startTime = Date.now();
                 } else {
-                    alert('題庫中沒有符合條件的題目，請嘗試生成新題目');
+                    // 如果題庫沒有，提示用戶
                     hideLoading();
+                    const goToBank = confirm('題庫中沒有符合條件的題目。\n\n要前往題庫練習系統瀏覽所有可用題目嗎？');
+                    if (goToBank) {
+                        window.location.href = '/question-bank.html';
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -490,9 +587,12 @@
 
         // 選擇選項
         function selectOption(btn, answer) {
+            // 移除其他選項的選中狀態
             document.querySelectorAll('.option-btn').forEach(b => {
                 b.classList.remove('selected');
             });
+            
+            // 標記當前選項為選中
             btn.classList.add('selected');
             selectedAnswer = answer;
         }

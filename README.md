@@ -124,7 +124,13 @@ npm start
 - `GET /api/practice/user-progress/:userId` - 獲取用戶練習進度
 - `GET /api/practice/concepts` - 獲取可用概念列表
 
-**詳細文檔**：查看 [PRACTICE_SYSTEM.md](PRACTICE_SYSTEM.md)
+### 題庫系統 ⭐⭐ 最新功能
+- `GET /api/question-bank/topics` - 獲取所有主題概覽
+- `GET /api/question-bank/topic/:topicNumber` - 按主題查詢題目
+- `GET /api/question-bank/practice-set` - 生成混合練習組
+- `GET /api/question-bank/stats` - 獲取題庫統計
+- `POST /api/question-bank/validate-answer` - 驗證答案
+- **詳細文檔**：查看 [QUESTION_BANK_GUIDE.md](QUESTION_BANK_GUIDE.md) 和 [PRACTICE_SYSTEM_GUIDE.md](PRACTICE_SYSTEM_GUIDE.md)
 
 ### 分析功能
 - `GET /api/analytics/overview` - 整體分析數據
@@ -140,11 +146,25 @@ npm start
 - **動畫效果**：流暢的頁面載入和互動動畫
 - **玻璃擬態**：現代化的視覺效果
 
+### 頁面系統
+1. **主聊天頁面** (`/`) - AI 對話系統
+2. **題庫練習系統** (`/question-bank.html`) ⭐ 新增
+   - Topic 1-10 系統化練習
+   - 多主題組合練習
+   - 61 道精選題目
+   - 完整進度追蹤
+3. **AI 生成練習** (`/practice.html`)
+   - 無限題目生成
+   - 靈活參數設定
+   - 即時答案驗證
+
 ### 互動功能
 - **實時聊天**：即時的 AI 對話體驗
 - **概念標籤**：自動顯示檢測到的統計概念
 - **數學公式**：MathJax 渲染的數學表達式
 - **程式碼高亮**：支援多種程式語言語法高亮
+- **即時反饋**：答題後立即顯示結果和解釋
+- **進度統計**：實時更新練習數據
 
 ## 📈 學習追蹤功能
 

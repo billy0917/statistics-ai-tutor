@@ -7,7 +7,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "echo 'Build completed'",
-    "vercel-build": "npm install"
+    "vercel-build": "npm install",
+    "import-questions": "node scripts/importQuestionBank.js",
+    "parse-questions": "node -e \"const parser = require('./utils/questionBankParser'); const qs = parser.parseAllQuestionBanks('..'); console.log(JSON.stringify(qs, null, 2));\"",
+    "test-question-bank": "node scripts/testQuestionBank.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
