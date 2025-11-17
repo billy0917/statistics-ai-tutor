@@ -152,3 +152,5 @@ if (validCount === questions.length && filesExist === 10) {
 
 console.log('='.repeat(60) + '\n');
 
+
+
