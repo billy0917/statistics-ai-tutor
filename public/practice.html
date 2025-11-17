@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="/i18n.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -164,22 +165,27 @@
         <!-- 標題區 -->
         <div class="glass rounded-2xl p-6 mb-6 fade-in">
             <div class="flex items-center justify-between mb-4">
-                <h1 class="text-3xl font-bold text-slate-100">📚 統計學練習系統</h1>
-                <div class="flex gap-3">
-                    <a href="/question-bank.html" class="text-blue-400 hover:text-blue-300 transition font-medium">
+                <h1 class="text-3xl font-bold text-slate-100" data-i18n="title">📚 統計學練習系統</h1>
+                <div class="flex gap-3 items-center">
+                    <button id="langToggle" class="glass-dark px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition-all text-sm font-medium flex items-center gap-2">
+                        <span id="langIcon">🌐</span>
+                        <span id="langText">中文</span>
+                    </button>
+                    <span class="text-slate-500">|</span>
+                    <a href="/question-bank.html" class="text-blue-400 hover:text-blue-300 transition font-medium" data-i18n="questionBankLink">
                         📖 題庫練習
                     </a>
                     <span class="text-slate-500">|</span>
-                    <a href="/" class="text-blue-400 hover:text-blue-300 transition">
+                    <a href="/" class="text-blue-400 hover:text-blue-300 transition" data-i18n="backToChat">
                         返回聊天
                     </a>
                 </div>
             </div>
-            <p class="text-slate-300">選擇概念和難度，使用 AI 生成個性化練習題！</p>
+            <p class="text-slate-300" data-i18n="subtitle">選擇概念和難度，使用 AI 生成個性化練習題！</p>
             <div class="mt-3 p-3 glass-dark rounded-lg border border-blue-500/30">
                 <div class="flex items-center gap-2 text-sm text-blue-200">
                     <span>💡</span>
-                    <span><strong>新功能：</strong>想要系統化練習？試試 <a href="/question-bank.html" class="underline font-medium text-blue-300 hover:text-blue-200">題庫練習系統</a>，包含 Topic 1-10 的 60+ 道題目！</span>
+                    <span><strong data-i18n="newFeature">新功能：</strong><span data-i18n="newFeatureText">想要系統化練習？試試</span> <a href="/question-bank.html" class="underline font-medium text-blue-300 hover:text-blue-200" data-i18n="questionBankLink">題庫練習系統</a><span data-i18n="questionBankDesc">，包含 Topic 1-10 的 60+ 道題目！</span></span>
                 </div>
             </div>
             
@@ -217,47 +223,47 @@
             <div class="grid md:grid-cols-3 gap-4 mb-4">
                 <!-- 概念選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-200 mb-2">統計概念</label>
+                    <label class="block text-sm font-medium text-slate-200 mb-2" data-i18n="conceptLabel">統計概念</label>
                     <select id="conceptSelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
-                        <option value="">選擇概念...</option>
-                        <option value="描述統計">描述統計</option>
-                        <option value="標準差">標準差</option>
-                        <option value="單樣本t檢定">單樣本t檢定</option>
-                        <option value="獨立樣本t檢定">獨立樣本t檢定</option>
-                        <option value="配對樣本t檢定">配對樣本t檢定</option>
-                        <option value="相關分析">相關分析</option>
-                        <option value="簡單迴歸">簡單迴歸</option>
-                        <option value="卡方檢定">卡方檢定</option>
+                        <option value="" data-i18n="conceptPlaceholder">選擇概念...</option>
+                        <option value="描述統計" data-i18n="conceptDescriptive">描述統計</option>
+                        <option value="標準差" data-i18n="conceptStdDev">標準差</option>
+                        <option value="單樣本t檢定" data-i18n="conceptOneSampleT">單樣本t檢定</option>
+                        <option value="獨立樣本t檢定" data-i18n="conceptIndependentT">獨立樣本t檢定</option>
+                        <option value="配對樣本t檢定" data-i18n="conceptPairedT">配對樣本t檢定</option>
+                        <option value="相關分析" data-i18n="conceptCorrelation">相關分析</option>
+                        <option value="簡單迴歸" data-i18n="conceptRegression">簡單迴歸</option>
+                        <option value="卡方檢定" data-i18n="conceptChiSquare">卡方檢定</option>
                     </select>
                 </div>
 
                 <!-- 難度選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-200 mb-2">難度級別</label>
+                    <label class="block text-sm font-medium text-slate-200 mb-2" data-i18n="difficultyLabel">難度級別</label>
                     <select id="difficultySelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
-                        <option value="basic">基礎 (Basic)</option>
-                        <option value="medium">中級 (Medium)</option>
-                        <option value="advanced">進階 (Advanced)</option>
+                        <option value="basic" data-i18n="difficultyBasic">基礎 (Basic)</option>
+                        <option value="medium" data-i18n="difficultyMedium">中級 (Medium)</option>
+                        <option value="advanced" data-i18n="difficultyAdvanced">進階 (Advanced)</option>
                     </select>
                 </div>
 
                 <!-- 題型選擇 -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-200 mb-2">題型</label>
+                    <label class="block text-sm font-medium text-slate-200 mb-2" data-i18n="typeLabel">題型</label>
                     <select id="typeSelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
-                        <option value="multiple_choice">選擇題 (MC)</option>
-                        <option value="case_study">案例分析</option>
-                        <option value="calculation">計算題</option>
-                        <option value="interpretation">解釋題</option>
+                        <option value="multiple_choice" data-i18n="typeMultipleChoice">選擇題 (MC)</option>
+                        <option value="case_study" data-i18n="typeCaseStudy">案例分析</option>
+                        <option value="calculation" data-i18n="typeCalculation">計算題</option>
+                        <option value="interpretation" data-i18n="typeInterpretation">解釋題</option>
                     </select>
                 </div>
             </div>
 
             <div class="flex gap-3">
-                <button id="generateBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-lg">
+                <button id="generateBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition shadow-lg" data-i18n="generateBtn">
                     🎯 生成新題目
                 </button>
-                <button id="loadBtn" class="flex-1 bg-slate-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-slate-500 transition shadow-lg">
+                <button id="loadBtn" class="flex-1 bg-slate-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-slate-500 transition shadow-lg" data-i18n="loadBtn">
                     📖 從題庫載入
                 </button>
             </div>
@@ -265,23 +271,23 @@
 
         <!-- 進度統計區 -->
         <div id="statsArea" class="glass rounded-2xl p-6 mb-6 fade-in hidden">
-            <h3 class="text-xl font-bold text-slate-100 mb-4">📊 練習統計</h3>
+            <h3 class="text-xl font-bold text-slate-100 mb-4" data-i18n="statsTitle">📊 練習統計</h3>
             <div class="grid md:grid-cols-4 gap-4">
                 <div class="text-center p-4 glass-dark rounded-lg border border-blue-500/30">
                     <div class="text-3xl font-bold text-blue-400" id="totalCount">0</div>
-                    <div class="text-sm text-slate-400">總題數</div>
+                    <div class="text-sm text-slate-400" data-i18n="totalCount">總題數</div>
                 </div>
                 <div class="text-center p-4 glass-dark rounded-lg border border-green-500/30">
                     <div class="text-3xl font-bold text-green-400" id="correctCount">0</div>
-                    <div class="text-sm text-slate-400">答對</div>
+                    <div class="text-sm text-slate-400" data-i18n="correctCount">答對</div>
                 </div>
                 <div class="text-center p-4 glass-dark rounded-lg border border-red-500/30">
                     <div class="text-3xl font-bold text-red-400" id="incorrectCount">0</div>
-                    <div class="text-sm text-slate-400">答錯</div>
+                    <div class="text-sm text-slate-400" data-i18n="incorrectCount">答錯</div>
                 </div>
                 <div class="text-center p-4 glass-dark rounded-lg border border-purple-500/30">
                     <div class="text-3xl font-bold text-purple-400" id="accuracy">0%</div>
-                    <div class="text-sm text-slate-400">正確率</div>
+                    <div class="text-sm text-slate-400" data-i18n="accuracy">正確率</div>
                 </div>
             </div>
         </div>
@@ -295,7 +301,7 @@
                     <span class="text-sm text-slate-300" id="questionType">選擇題</span>
                     <span class="text-sm text-slate-300" id="conceptName">描述統計</span>
                 </div>
-                <button id="skipBtn" class="text-slate-400 hover:text-slate-300 transition">
+                <button id="skipBtn" class="text-slate-400 hover:text-slate-300 transition" data-i18n="skipBtn">
                     跳過 →
                 </button>
             </div>
@@ -312,15 +318,15 @@
 
             <!-- 開放式答案輸入 -->
             <div id="answerInputArea" class="mb-6 hidden">
-                <textarea id="answerInput" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent" rows="4" placeholder="請輸入你的答案..."></textarea>
+                <textarea id="answerInput" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent" rows="4" placeholder="請輸入你的答案..." data-i18n-placeholder="answerPlaceholder"></textarea>
             </div>
 
             <!-- 提交按鈕 -->
             <div class="flex gap-3">
-                <button id="submitBtn" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg disabled:bg-slate-600 disabled:cursor-not-allowed">
+                <button id="submitBtn" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg disabled:bg-slate-600 disabled:cursor-not-allowed" data-i18n="submitBtn">
                     提交答案
                 </button>
-                <button id="hintBtn" class="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition shadow-lg">
+                <button id="hintBtn" class="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition shadow-lg" data-i18n="hintBtn">
                     💡 提示
                 </button>
             </div>
@@ -330,13 +336,13 @@
 
             <!-- 解釋區 -->
             <div id="explanationArea" class="mt-6 p-4 glass-dark border-l-4 border-blue-500 rounded hidden">
-                <h4 class="font-semibold text-blue-300 mb-2">📖 詳細解釋</h4>
+                <h4 class="font-semibold text-blue-300 mb-2" data-i18n="explanationTitle">📖 詳細解釋</h4>
                 <div id="explanationText" class="text-slate-300"></div>
             </div>
 
             <!-- 下一題按鈕 -->
             <div id="nextBtnArea" class="mt-6 hidden">
-                <button id="nextBtn" class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition shadow-lg">
+                <button id="nextBtn" class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition shadow-lg" data-i18n="nextBtn">
                     下一題 →
                 </button>
             </div>
@@ -345,7 +351,7 @@
         <!-- 載入動畫 -->
         <div id="loadingArea" class="glass rounded-2xl p-12 text-center hidden">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
-            <p class="text-slate-300">正在生成題目...</p>
+            <p class="text-slate-300" data-i18n="loadingMsg">正在生成題目...</p>
         </div>
     </div>
 
@@ -418,7 +424,38 @@
             loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
+        // 語言切換功能
+        function initLanguage() {
+            const currentLang = langManager.getCurrentLanguage();
+            updateLangButton(currentLang);
+            langManager.translatePage('practice');
+            
+            // 語言切換按鈕事件
+            document.getElementById('langToggle').addEventListener('click', () => {
+                const newLang = langManager.getCurrentLanguage() === 'zh-TW' ? 'en' : 'zh-TW';
+                langManager.setLanguage(newLang);
+                updateLangButton(newLang);
+                langManager.translatePage('practice');
+                
+                // 更新placeholder
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    el.placeholder = langManager.t(key, 'practice');
+                });
+            });
+        }
+        
+        function updateLangButton(lang) {
+            const langText = document.getElementById('langText');
+            if (lang === 'zh-TW') {
+                langText.textContent = '中文';
+            } else {
+                langText.textContent = 'English';
+            }
+        }
+
         // 頁面載入時初始化
+        initLanguage();
         initUser();
 
         // 生成新題目

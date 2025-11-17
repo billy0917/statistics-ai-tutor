@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="/i18n.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -469,22 +470,29 @@
             <!-- 標題區域 -->
             <div class="text-center mb-8 animate-fadeInDown">
                 <div class="glass rounded-3xl p-8 mb-6 card-shadow animate-scaleIn animate-delay-200">
-                    <h1 class="text-4xl md:text-5xl font-bold text-slate-100 mb-4 animate-pulse-slow">
+                    <!-- 語言切換按鈕 -->
+                    <div class="flex justify-end mb-4">
+                        <button id="langToggle" class="glass-dark px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-700/50 transition-all text-sm font-medium flex items-center gap-2">
+                            <span id="langIcon">🌐</span>
+                            <span id="langText">中文</span>
+                        </button>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-100 mb-4 animate-pulse-slow" data-i18n="title">
                         📊 AI 教學助理
                     </h1>
-                    <p class="text-lg text-slate-300 font-light animate-fadeInUp animate-delay-400">
+                    <p class="text-lg text-slate-300 font-light animate-fadeInUp animate-delay-400" data-i18n="subtitle">
                         您的專業統計學習夥伴，隨時為您解答統計學相關問題
                     </p>
                     <!-- 導航按鈕 -->
                     <div class="mt-6 flex gap-3 justify-center animate-fadeInUp animate-delay-500 flex-wrap">
-                        <a href="/" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-purple-600 transition-all transform hover:scale-105 font-medium shadow-lg">
+                        <a href="/" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-purple-600 transition-all transform hover:scale-105 font-medium shadow-lg" data-i18n="navAiChat">
                             💬 AI 對話
                         </a>
                         <a href="/question-bank.html" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-green-600 transition-all transform hover:scale-105 font-medium shadow-lg relative">
-                            📖 題庫練習
-                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
+                            <span data-i18n="navQuestionBank">📖 題庫練習</span>
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full" data-i18n="newBadge">New</span>
                         </a>
-                        <a href="/practice.html" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-blue-600 transition-all transform hover:scale-105 font-medium shadow-lg">
+                        <a href="/practice.html" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-blue-600 transition-all transform hover:scale-105 font-medium shadow-lg" data-i18n="navAiPractice">
                             🎯 AI 生成練習
                         </a>
                     </div>
@@ -504,7 +512,7 @@
                         <div class="text-center py-8" id="welcomeSection">
                             <div class="glass-dark rounded-2xl p-6 mb-6 mx-auto max-w-md animate-scaleIn animate-delay-500">
                                 <div class="text-2xl mb-3 animate-pulse-slow">👋</div>
-                                <p class="text-slate-200 leading-relaxed animate-fadeInUp animate-delay-600">
+                                <p class="text-slate-200 leading-relaxed animate-fadeInUp animate-delay-600" data-i18n="welcomeMessage">
                                     歡迎使用統計學 AI 教學助理！<br>
                                     我可以幫助您解答統計學相關的問題，包括描述統計、推論統計、假設檢定等主題。
                                 </p>
@@ -513,24 +521,24 @@
                             <!-- 用戶登入區域 -->
                             <div class="mb-6 animate-fadeInUp animate-delay-600" id="loginSection">
                                 <div class="glass-dark rounded-2xl p-6 max-w-md mx-auto">
-                                    <h3 class="text-slate-200 text-lg font-medium mb-4 text-center">
+                                    <h3 class="text-slate-200 text-lg font-medium mb-4 text-center" data-i18n="loginTitle">
                                         🔐 登入以追蹤學習進度
                                     </h3>
                                     <div class="space-y-3">
-                                        <input type="text" id="usernameInput" placeholder="輸入用戶名" 
+                                        <input type="text" id="usernameInput" placeholder="輸入用戶名" data-i18n-placeholder="usernamePlaceholder" 
                                                class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm">
                                         <div class="flex gap-2">
                                             <button onclick="loginUser()" 
-                                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors" data-i18n="loginBtn">
                                                 登入
                                             </button>
                                             <button onclick="registerUser()" 
-                                                    class="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors">
+                                                    class="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-3 px-4 rounded-xl text-sm font-medium transition-colors" data-i18n="registerBtn">
                                                 註冊
                                             </button>
                                         </div>
                                         <button onclick="continueAsGuest()" 
-                                                class="w-full text-slate-400 hover:text-slate-300 text-sm py-2 transition-colors">
+                                                class="w-full text-slate-400 hover:text-slate-300 text-sm py-2 transition-colors" data-i18n="guestBtn">
                                             以訪客身份繼續
                                         </button>
                                     </div>
@@ -540,24 +548,24 @@
                             <!-- 範例問題 -->
                             <div class="grid gap-3 max-w-2xl mx-auto animate-fadeInUp animate-delay-700" id="exampleQuestions" style="display: none;">
                                 <h3 class="text-slate-300 text-sm font-medium mb-2 flex items-center justify-center gap-2">
-                                    <span class="animate-pulse-slow">💡</span> 點擊下方範例開始對話
+                                    <span class="animate-pulse-slow">💡</span> <span data-i18n="exampleTitle">點擊下方範例開始對話</span>
                                 </h3>
                                 
                                 <div class="grid gap-2 md:grid-cols-2">
-                                    <button onclick="askExample('什麼是標準差？如何計算？')" 
-                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-100">
+                                    <button onclick="askExample(this.textContent)" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-100" data-i18n="example1">
                                         什麼是標準差？如何計算？
                                     </button>
-                                    <button onclick="askExample('請解釋中央極限定理')" 
-                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-200">
+                                    <button onclick="askExample(this.textContent)" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-200" data-i18n="example2">
                                         請解釋中央極限定理
                                     </button>
-                                    <button onclick="askExample('如何進行t檢定？')" 
-                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-300">
+                                    <button onclick="askExample(this.textContent)" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInLeft animate-delay-300" data-i18n="example3">
                                         如何進行t檢定？
                                     </button>
-                                    <button onclick="askExample('什麼時候使用卡方檢定？')" 
-                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-400">
+                                    <button onclick="askExample(this.textContent)" 
+                                            class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50 animate-slideInRight animate-delay-400" data-i18n="example4">
                                         什麼時候使用卡方檢定？
                                     </button>
                                 </div>
@@ -567,7 +575,7 @@
                         <!-- 載入動畫 -->
                         <div id="loading" class="hidden flex items-center gap-3 mb-4">
                             <div class="glass-dark rounded-2xl px-6 py-4 flex items-center gap-3">
-                                <span class="text-slate-200 text-sm">AI 正在思考中</span>
+                                <span class="text-slate-200 text-sm" data-i18n="thinkingMsg">AI 正在思考中</span>
                                 <div class="flex gap-1">
                                     <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
                                     <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
@@ -588,11 +596,11 @@
                                 </div>
                                 <div>
                                     <div class="text-slate-200 text-sm font-medium" id="userDisplayName">用戶</div>
-                                    <div class="text-slate-400 text-xs" id="userStatus">已登入</div>
+                                    <div class="text-slate-400 text-xs" id="userStatus" data-i18n="loggedInStatus">已登入</div>
                                 </div>
                             </div>
                             <button onclick="logoutUser()" 
-                                    class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-200 text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                    class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-200 text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400" data-i18n="logoutBtn">
                                 登出
                             </button>
                         </div>
@@ -602,12 +610,14 @@
                                 <input type="text" 
                                        id="messageInput"
                                        placeholder="請輸入您的統計學問題..."
+                                       data-i18n-placeholder="inputPlaceholder"
                                        class="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/60 rounded-2xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent input-focus"
                                        onkeypress="handleKeyPress(event)">
                             </div>
                             <button id="sendButton" 
                                     onclick="sendMessage()"
                                     alt="發送"
+                                    data-i18n-alt="sendBtn"
                                     class="send-btn focus:outline-none">
                                 <i>發</i>
                                 <i>送</i>
@@ -620,7 +630,7 @@
             
             <!-- 底部信息 -->
             <div class="text-center mt-6 animate-fadeInUp animate-delay-500">
-                <p class="text-slate-400 text-sm animate-pulse-slow">
+                <p class="text-slate-400 text-sm animate-pulse-slow" data-i18n="footer">
                     由 AI 技術驅動 • 專業統計學教學助理
                 </p>
             </div>
@@ -1336,8 +1346,49 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        // 語言切換功能
+        function initLanguage() {
+            // 初始化語言管理器
+            const currentLang = langManager.getCurrentLanguage();
+            updateLangButton(currentLang);
+            langManager.translatePage('chat');
+            
+            // 語言切換按鈕事件
+            document.getElementById('langToggle').addEventListener('click', () => {
+                const newLang = langManager.getCurrentLanguage() === 'zh-TW' ? 'en' : 'zh-TW';
+                langManager.setLanguage(newLang);
+                updateLangButton(newLang);
+                langManager.translatePage('chat');
+                
+                // 更新placeholder（特殊處理）
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    el.placeholder = langManager.t(key, 'chat');
+                });
+                
+                // 更新sendButton的alt屬性（特殊處理）
+                const sendBtn = document.querySelector('[data-i18n-alt]');
+                if (sendBtn) {
+                    const key = sendBtn.getAttribute('data-i18n-alt');
+                    sendBtn.setAttribute('alt', langManager.t(key, 'chat'));
+                }
+            });
+        }
+        
+        function updateLangButton(lang) {
+            const langText = document.getElementById('langText');
+            if (lang === 'zh-TW') {
+                langText.textContent = '中文';
+            } else {
+                langText.textContent = 'English';
+            }
+        }
+
         // 頁面載入完成後初始化
         window.addEventListener('load', () => {
+            // 初始化語言
+            initLanguage();
+            
             // 檢查是否有保存的用戶信息
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
@@ -1345,7 +1396,10 @@
                     currentUser = JSON.parse(savedUser);
                     isLoggedIn = true;
                     showChatInterface();
-                    addMessage(`歡迎回來，${currentUser.username}！您的學習進度將繼續被追蹤。`);
+                    const welcomeMsg = langManager.getCurrentLanguage() === 'zh-TW' 
+                        ? `歡迎回來，${currentUser.username}！您的學習進度將繼續被追蹤。`
+                        : `Welcome back, ${currentUser.username}! Your progress will continue to be tracked.`;
+                    addMessage(welcomeMsg);
                 } catch (error) {
                     console.error('解析保存的用戶信息失敗:', error);
                     localStorage.removeItem('currentUser');
