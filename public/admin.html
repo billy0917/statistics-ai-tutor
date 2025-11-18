@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員控制台 - Statistics AI Tutor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/i18n.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* 暗色主題配色方案 */
+        .glass {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(71, 85, 105, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.4);
+        }
+
+        /* 暗色滾動條 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.6);
+            border-radius: 3px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .user-card {
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-cover bg-center bg-no-repeat" 
+      style="background-image: url('https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg');">
+    
+    <!-- 背景遮罩 -->
+    <div class="fixed inset-0 bg-black/20 -z-10"></div>
+    
+    <div class="relative max-w-7xl mx-auto p-4 md:p-8">
+        <!-- 標題區 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🛡️</span>
+                    <h1 class="text-3xl font-bold text-slate-100" data-i18n="adminTitle">管理員控制台</h1>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <button id="langToggle" class="glass-dark px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition-all text-sm font-medium flex items-center gap-2">
+                        <span>🌐</span>
+                        <span id="langText">中文</span>
+                    </button>
+                    <span class="text-slate-500">|</span>
+                    <button onclick="logoutAdmin()" class="text-red-400 hover:text-red-300 transition font-medium" data-i18n="logoutBtn">
+                        登出
+                    </button>
+                    <span class="text-slate-500">|</span>
+                    <a href="/" class="text-blue-400 hover:text-blue-300 transition" data-i18n="backToHome">
+                        返回首頁
+                    </a>
+                </div>
+            </div>
+            <p class="text-slate-300" data-i18n="adminSubtitle">管理所有用戶的學習進度和系統統計</p>
+        </div>
+
+        <!-- 系統總覽統計 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <h2 class="text-2xl font-bold text-slate-100 mb-4" data-i18n="systemOverview">📊 系統總覽</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-blue-500/30">
+                    <div class="text-3xl font-bold text-blue-400" id="totalUsers">-</div>
+                    <div class="text-sm text-slate-400 mt-2" data-i18n="totalUsersLabel">總用戶數</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-green-500/30">
+                    <div class="text-3xl font-bold text-green-400" id="totalQuestions">-</div>
+                    <div class="text-sm text-slate-400 mt-2" data-i18n="totalQuestionsLabel">總題目數</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-purple-500/30">
+                    <div class="text-3xl font-bold text-purple-400" id="totalAnswers">-</div>
+                    <div class="text-sm text-slate-400 mt-2" data-i18n="totalAnswersLabel">總答題數</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-yellow-500/30">
+                    <div class="text-3xl font-bold text-yellow-400" id="activeToday">-</div>
+                    <div class="text-sm text-slate-400 mt-2" data-i18n="activeTodayLabel">今日活躍</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用戶列表 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-slate-100" data-i18n="userListTitle">👥 用戶列表</h2>
+                <button onclick="refreshUsers()" class="glass-dark px-4 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition text-sm font-medium" data-i18n="refreshBtn">
+                    🔄 刷新
+                </button>
+            </div>
+
+            <!-- 搜索和篩選 -->
+            <div class="mb-4">
+                <input type="text" id="searchInput" placeholder="搜索用戶名..." data-i18n-placeholder="searchPlaceholder"
+                       class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                       onkeyup="filterUsers()">
+            </div>
+
+            <!-- 載入動畫 -->
+            <div id="loadingUsers" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+                <p class="text-slate-300" data-i18n="loadingUsers">載入用戶中...</p>
+            </div>
+
+            <!-- 用戶卡片列表 -->
+            <div id="usersContainer" class="grid md:grid-cols-2 gap-4 hidden"></div>
+
+            <!-- 無用戶提示 -->
+            <div id="noUsers" class="text-center py-12 hidden">
+                <p class="text-slate-400" data-i18n="noUsers">暫無用戶數據</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用戶詳情Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50" onclick="closeUserModal(event)">
+        <div class="glass rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-bold text-slate-100" data-i18n="userDetailsTitle">用戶詳情</h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-200 text-2xl">&times;</button>
+            </div>
+            <div id="userModalContent">
+                <!-- 動態內容 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局變量
+        let allUsers = [];
+        let systemStats = null;
+
+        // 檢查管理員權限
+        function checkAdminAuth() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (!currentUser.role || currentUser.role !== 'admin') {
+                alert(langManager.getCurrentLanguage() === 'zh-TW' ? '無權訪問此頁面' : 'No permission to access this page');
+                window.location.href = '/';
+                return false;
+            }
+            return true;
+        }
+
+        // 管理員登出
+        function logoutAdmin() {
+            if (confirm(langManager.getCurrentLanguage() === 'zh-TW' ? '確定要登出嗎？' : 'Confirm logout?')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = '/';
+            }
+        }
+
+        // 獲取系統統計
+        async function loadSystemStats() {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/stats/overview', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    systemStats = data;
+                    displaySystemStats(data.overview);
+                }
+            } catch (error) {
+                console.error('獲取系統統計失敗:', error);
+            }
+        }
+
+        // 顯示系統統計
+        function displaySystemStats(stats) {
+            document.getElementById('totalUsers').textContent = stats.totalUsers;
+            document.getElementById('totalQuestions').textContent = stats.totalQuestions;
+            document.getElementById('totalAnswers').textContent = stats.totalAnswers;
+            document.getElementById('activeToday').textContent = stats.activeToday;
+        }
+
+        // 獲取所有用戶
+        async function loadUsers() {
+            try {
+                document.getElementById('loadingUsers').classList.remove('hidden');
+                document.getElementById('usersContainer').classList.add('hidden');
+                document.getElementById('noUsers').classList.add('hidden');
+
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allUsers = data.users;
+                    displayUsers(allUsers);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('獲取用戶列表失敗:', error);
+                document.getElementById('loadingUsers').classList.add('hidden');
+                document.getElementById('noUsers').classList.remove('hidden');
+            }
+        }
+
+        // 顯示用戶列表
+        function displayUsers(users) {
+            document.getElementById('loadingUsers').classList.add('hidden');
+            
+            const container = document.getElementById('usersContainer');
+            
+            if (users.length === 0) {
+                container.classList.add('hidden');
+                document.getElementById('noUsers').classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            document.getElementById('noUsers').classList.add('hidden');
+
+            const viewDetailsText = langManager.t('viewDetails', 'admin');
+            const practiceCountText = langManager.t('practiceCountLabel', 'admin');
+            const accuracyText = langManager.t('accuracyLabel', 'admin');
+            const conceptsText = langManager.t('learningConcepts', 'admin');
+            const masteryText = langManager.t('masteryLabel', 'admin');
+            const sessionsText = langManager.getCurrentLanguage() === 'zh-TW' ? '次會話' : 'sessions';
+            const messagesText = langManager.getCurrentLanguage() === 'zh-TW' ? '條消息' : 'messages';
+            const lastActivityText = langManager.getCurrentLanguage() === 'zh-TW' ? '最後活動' : 'Last Activity';
+            
+            container.innerHTML = users.map(user => `
+                <div class="user-card glass-dark rounded-xl p-4 border border-slate-600/40">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                ${user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-100">${user.username}</h3>
+                                <p class="text-xs text-slate-400">${formatDate(user.created_at)}</p>
+                            </div>
+                        </div>
+                        <button onclick="showUserDetails('${user.user_id}')" class="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                            ${viewDetailsText}
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="text-center p-2 bg-slate-700/30 rounded">
+                            <div class="text-xl font-bold text-blue-400">${user.stats.totalPractice}</div>
+                            <div class="text-xs text-slate-400">${practiceCountText}</div>
+                        </div>
+                        <div class="text-center p-2 bg-slate-700/30 rounded">
+                            <div class="text-xl font-bold text-green-400">${user.stats.accuracy}%</div>
+                            <div class="text-xs text-slate-400">${accuracyText}</div>
+                        </div>
+                        <div class="text-center p-2 bg-slate-700/30 rounded">
+                            <div class="text-xl font-bold text-purple-400">${user.stats.totalConcepts}</div>
+                            <div class="text-xs text-slate-400">${conceptsText}</div>
+                        </div>
+                        <div class="text-center p-2 bg-slate-700/30 rounded">
+                            <div class="text-xl font-bold text-yellow-400">${user.stats.averageMastery}%</div>
+                            <div class="text-xs text-slate-400">${masteryText}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span>💬 ${user.stats.totalSessions} ${sessionsText}</span>
+                        <span>📝 ${user.stats.totalMessages} ${messagesText}</span>
+                    </div>
+                    
+                    ${user.stats.lastActivity ? `
+                    <div class="mt-2 pt-2 border-t border-slate-600/40 text-xs text-slate-400">
+                        ${lastActivityText}: ${formatDate(user.stats.lastActivity)}
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 搜索過濾用戶
+        function filterUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm)
+            );
+            displayUsers(filtered);
+        }
+
+        // 刷新用戶列表
+        function refreshUsers() {
+            loadUsers();
+            loadSystemStats();
+        }
+
+        // 顯示用戶詳情
+        async function showUserDetails(userId) {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/users/${userId}/details`, {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayUserDetails(data);
+                    document.getElementById('userModal').classList.remove('hidden');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('獲取用戶詳情失敗:', error);
+                alert(langManager.getCurrentLanguage() === 'zh-TW' ? '獲取用戶詳情失敗' : 'Failed to load user details');
+            }
+        }
+
+        // 顯示用戶詳情Modal內容
+        function displayUserDetails(data) {
+            const { user, progress, recentAnswers, recentSessions } = data;
+            
+            const basicInfoText = langManager.getCurrentLanguage() === 'zh-TW' ? '基本信息' : 'Basic Info';
+            const usernameText = langManager.t('usernameLabel', 'admin');
+            const userIdText = langManager.t('userIdLabel', 'admin');
+            const createdAtText = langManager.t('createdAtLabel', 'admin');
+            const lastActiveText = langManager.getCurrentLanguage() === 'zh-TW' ? '最後活動' : 'Last Active';
+            const levelText = langManager.getCurrentLanguage() === 'zh-TW' ? '學習等級' : 'Level';
+            const emailText = langManager.getCurrentLanguage() === 'zh-TW' ? '電郵' : 'Email';
+            const notSetText = langManager.getCurrentLanguage() === 'zh-TW' ? '未設置' : 'Not set';
+            const learningProgressTitle = langManager.t('learningProgressTitle', 'admin');
+            const conceptsText = langManager.getCurrentLanguage() === 'zh-TW' ? '個概念' : 'concepts';
+            const practiceText = langManager.getCurrentLanguage() === 'zh-TW' ? '練習' : 'Practiced';
+            const timesText = langManager.getCurrentLanguage() === 'zh-TW' ? '次' : 'times';
+            const correctText = langManager.getCurrentLanguage() === 'zh-TW' ? '答對' : 'Correct';
+            const questionsText = langManager.getCurrentLanguage() === 'zh-TW' ? '題' : 'questions';
+            const noProgressText = langManager.t('noProgressData', 'admin');
+            const recentAnswersText = langManager.getCurrentLanguage() === 'zh-TW' ? '最近答題記錄' : 'Recent Answers';
+            
+            const content = `
+                <div class="space-y-6">
+                    <!-- 用戶基本信息 -->
+                    <div class="glass-dark rounded-xl p-4">
+                        <h4 class="font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                            <span>👤</span> ${basicInfoText}
+                        </h4>
+                        <div class="grid md:grid-cols-2 gap-3 text-sm">
+                            <div><span class="text-slate-400">${usernameText}:</span> <span class="text-slate-100">${user.username}</span></div>
+                            <div><span class="text-slate-400">${userIdText}:</span> <span class="text-slate-300 text-xs">${user.user_id}</span></div>
+                            <div><span class="text-slate-400">${createdAtText}:</span> <span class="text-slate-100">${formatDate(user.created_at)}</span></div>
+                            <div><span class="text-slate-400">${lastActiveText}:</span> <span class="text-slate-100">${formatDate(user.last_active)}</span></div>
+                            <div><span class="text-slate-400">${levelText}:</span> <span class="text-slate-100">Level ${user.learning_level}</span></div>
+                            <div><span class="text-slate-400">${emailText}:</span> <span class="text-slate-100">${user.email || notSetText}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 學習進度 -->
+                    <div class="glass-dark rounded-xl p-4">
+                        <h4 class="font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                            <span>📚</span> ${learningProgressTitle} (${progress.length} ${conceptsText})
+                        </h4>
+                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                            ${progress.length > 0 ? progress.map(p => `
+                                <div class="bg-slate-700/30 rounded p-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-slate-100 font-medium text-sm">${p.concept_name}</span>
+                                        <span class="text-slate-300 text-sm">${(parseFloat(p.mastery_level) * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-600 rounded-full h-2">
+                                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style="width: ${parseFloat(p.mastery_level) * 100}%"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-2 text-xs text-slate-400">
+                                        <span>${practiceText} ${p.practice_count} ${timesText}</span>
+                                        <span>${correctText} ${p.correct_answers} ${questionsText}</span>
+                                    </div>
+                                </div>
+                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">${noProgressText}</p>`}
+                        </div>
+                    </div>
+
+                    <!-- 最近答題記錄 -->
+                    <div class="glass-dark rounded-xl p-4">
+                        <h4 class="font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                            <span>✍️</span> ${recentAnswersText}
+                        </h4>
+                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                            ${recentAnswers.length > 0 ? recentAnswers.slice(0, 10).map(a => `
+                                <div class="bg-slate-700/30 rounded p-3 text-sm">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <p class="text-slate-100 mb-1">${a.practice_questions?.question_text?.substring(0, 80)}...</p>
+                                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                                <span>${a.practice_questions?.concept_name}</span>
+                                                <span>•</span>
+                                                <span>${langManager.getCurrentLanguage() === 'zh-TW' ? '難度' : 'Difficulty'} ${a.practice_questions?.difficulty_level}</span>
+                                                <span>•</span>
+                                                <span>${formatDate(a.created_at)}</span>
+                                            </div>
+                                        </div>
+                                        <span class="${a.is_correct ? 'text-green-400' : 'text-red-400'} font-medium ml-2">
+                                            ${a.is_correct ? '✓' : '✗'}
+                                        </span>
+                                    </div>
+                                </div>
+                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">${langManager.getCurrentLanguage() === 'zh-TW' ? '暫無答題記錄' : 'No answer records'}</p>`}
+                        </div>
+                    </div>
+
+                    <!-- 聊天會話 -->
+                    <div class="glass-dark rounded-xl p-4">
+                        <h4 class="font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                            <span>💬</span> ${langManager.getCurrentLanguage() === 'zh-TW' ? '聊天會話歷史' : 'Chat Session History'}
+                        </h4>
+                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                            ${recentSessions.length > 0 ? recentSessions.map(s => `
+                                <div class="bg-slate-700/30 rounded p-3 text-sm">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-slate-100">${s.topic || (langManager.getCurrentLanguage() === 'zh-TW' ? '一般對話' : 'General Conversation')}</p>
+                                            <p class="text-xs text-slate-400 mt-1">${formatDate(s.start_time)}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-slate-300">${s.message_count} ${langManager.getCurrentLanguage() === 'zh-TW' ? '條消息' : 'messages'}</p>
+                                            <p class="text-xs ${s.is_active ? 'text-green-400' : 'text-slate-400'} mt-1">
+                                                ${s.is_active ? (langManager.getCurrentLanguage() === 'zh-TW' ? '進行中' : 'Active') : (langManager.getCurrentLanguage() === 'zh-TW' ? '已結束' : 'Ended')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">${langManager.getCurrentLanguage() === 'zh-TW' ? '暫無會話記錄' : 'No session records'}</p>`}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userModalContent').innerHTML = content;
+        }
+
+        // 關閉用戶詳情Modal
+        function closeUserModal(event) {
+            if (!event || event.target.id === 'userModal') {
+                document.getElementById('userModal').classList.add('hidden');
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                if (hours === 0) {
+                    const minutes = Math.floor(diff / (1000 * 60));
+                    return langManager.getCurrentLanguage() === 'zh-TW' 
+                        ? `${minutes} 分鐘前` 
+                        : `${minutes} mins ago`;
+                }
+                return langManager.getCurrentLanguage() === 'zh-TW' 
+                    ? `${hours} 小時前` 
+                    : `${hours} hours ago`;
+            }
+            if (days < 7) {
+                return langManager.getCurrentLanguage() === 'zh-TW' 
+                    ? `${days} 天前` 
+                    : `${days} days ago`;
+            }
+            return date.toLocaleDateString(langManager.getCurrentLanguage() === 'zh-TW' ? 'zh-TW' : 'en-US');
+        }
+
+        // 語言切換功能
+        function initLanguage() {
+            const currentLang = langManager.getCurrentLanguage();
+            updateLangButton(currentLang);
+            langManager.translatePage('admin');
+            
+            // 更新placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = langManager.t(key, 'admin');
+            });
+            
+            document.getElementById('langToggle').addEventListener('click', () => {
+                const newLang = langManager.getCurrentLanguage() === 'zh-TW' ? 'en' : 'zh-TW';
+                langManager.setLanguage(newLang);
+                updateLangButton(newLang);
+                
+                // 翻譯頁面元素
+                langManager.translatePage('admin');
+                
+                // 更新placeholder
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    el.placeholder = langManager.t(key, 'admin');
+                });
+                
+                // 重新渲染用戶列表（如果已載入）
+                if (allUsers.length > 0) {
+                    displayUsers(allUsers);
+                }
+            });
+        }
+        
+        function updateLangButton(lang) {
+            const langText = document.getElementById('langText');
+            if (lang === 'zh-TW') {
+                langText.textContent = '中文';
+            } else {
+                langText.textContent = 'English';
+            }
+        }
+
+        // 初始化
+        if (checkAdminAuth()) {
+            initLanguage();
+            loadSystemStats();
+            loadUsers();
+        }
+    </script>
+</body>
+</html>
+

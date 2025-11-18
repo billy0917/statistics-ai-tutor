@@ -69,7 +69,7 @@ router.post('/register', async (req, res) => {
 // 用戶登入（簡單版本，實際項目可能需要更複雜的認證）
 router.post('/login', async (req, res) => {
     try {
-        const { username } = req.body;
+        const { username, password } = req.body;
         
         if (!username || !username.trim()) {
             return res.status(400).json({
@@ -78,6 +78,40 @@ router.post('/login', async (req, res) => {
             });
         }
         
+        // 檢查是否為管理員登入
+        if (username.trim().toLowerCase() === 'admin') {
+            // 管理員需要密碼
+            if (!password) {
+                return res.status(400).json({
+                    success: false,
+                    error: '管理員登入需要密碼',
+                    requirePassword: true
+                });
+            }
+            
+            // 驗證管理員密碼
+            if (password !== 'admin123') {
+                return res.status(401).json({
+                    success: false,
+                    error: '管理員密碼錯誤'
+                });
+            }
+            
+            // 管理員登入成功
+            return res.json({
+                success: true,
+                user: {
+                    user_id: 'admin',
+                    username: 'admin',
+                    role: 'admin',
+                    email: 'admin@statistics-tutor.com'
+                },
+                isAdmin: true,
+                message: '管理員登入成功'
+            });
+        }
+        
+        // 普通用戶登入
         // 查找用戶
         const { data: user, error } = await db.client
             .from('users')
@@ -102,6 +136,7 @@ router.post('/login', async (req, res) => {
         res.json({
             success: true,
             user: user,
+            isAdmin: false,
             message: '登入成功'
         });
         

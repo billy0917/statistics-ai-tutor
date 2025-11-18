@@ -11,6 +11,7 @@ const userRoutes = require('./routes/users');
 const analyticsRoutes = require('./routes/analytics');
 const practiceRoutes = require('./routes/practice');
 const questionBankRoutes = require('./routes/questionBank');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -72,6 +73,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/practice', practiceRoutes);
 app.use('/api/question-bank', questionBankRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 健康檢查端點
 app.get('/api/health', (req, res) => {
@@ -95,6 +97,11 @@ app.get('/practice.html', (req, res) => {
 // 題庫練習系統路由
 app.get('/question-bank.html', (req, res) => {
     res.sendFile(__dirname + '/public/question-bank.html');
+});
+
+// 管理員頁面路由
+app.get('/admin.html', (req, res) => {
+    res.sendFile(__dirname + '/public/admin.html');
 });
 
 // 404 處理
