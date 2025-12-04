@@ -480,7 +480,7 @@ const i18n = {
 // 語言管理器
 class LanguageManager {
     constructor() {
-        this.currentLang = localStorage.getItem('language') || 'zh-TW';
+        this.currentLang = localStorage.getItem('language') || 'en';
     }
 
     // 獲取當前語言
