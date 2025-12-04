@@ -96,7 +96,12 @@
                     </a>
                 </div>
             </div>
-            <p class="text-slate-300" data-i18n="adminSubtitle">管理所有用戶的學習進度和系統統計</p>
+            <div class="flex items-center justify-between">
+                <p class="text-slate-300" data-i18n="adminSubtitle">管理所有用戶的學習進度和系統統計</p>
+                <button onclick="exportAllChats()" class="glass-dark px-4 py-2 rounded-lg text-green-400 hover:bg-green-500/20 transition text-sm font-medium flex items-center gap-2">
+                    📥 Export All Chats
+                </button>
+            </div>
         </div>
 
         <!-- 系統總覽統計 -->
@@ -152,6 +157,147 @@
                 <p class="text-slate-400" data-i18n="noUsers">暫無用戶數據</p>
             </div>
         </div>
+
+        <!-- 老師題目管理 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+                <h2 class="text-2xl font-bold text-slate-100">📝 Teacher Questions Management</h2>
+                <div class="flex gap-2">
+                    <button onclick="showCreateQuestionForm()" class="glass-dark px-4 py-2 rounded-lg text-green-400 hover:bg-green-500/20 transition text-sm font-medium">
+                        ➕ Create New Question
+                    </button>
+                    <button onclick="loadTeacherQuestions()" class="glass-dark px-4 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition text-sm font-medium">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- 老師題目統計 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-green-500/30">
+                    <div class="text-3xl font-bold text-green-400" id="teacherTotalQuestions">-</div>
+                    <div class="text-sm text-slate-400 mt-2">Total Questions</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-blue-500/30">
+                    <div class="text-3xl font-bold text-blue-400" id="teacherActiveQuestions">-</div>
+                    <div class="text-sm text-slate-400 mt-2">Active Questions</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-purple-500/30">
+                    <div class="text-3xl font-bold text-purple-400" id="teacherTotalAnswers">-</div>
+                    <div class="text-sm text-slate-400 mt-2">Total Attempts</div>
+                </div>
+                <div class="stat-card glass-dark rounded-xl p-4 text-center border border-yellow-500/30">
+                    <div class="text-3xl font-bold text-yellow-400" id="teacherAvgAccuracy">-</div>
+                    <div class="text-sm text-slate-400 mt-2">Avg Accuracy</div>
+                </div>
+            </div>
+
+            <!-- 老師題目列表 -->
+            <div id="loadingTeacherQuestions" class="text-center py-8 hidden">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-400 mb-3"></div>
+                <p class="text-slate-300">Loading questions...</p>
+            </div>
+
+            <div id="teacherQuestionsContainer" class="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+                <!-- 動態填充 -->
+            </div>
+
+            <div id="noTeacherQuestions" class="text-center py-8 hidden">
+                <p class="text-slate-400">No teacher questions yet. Click "Create New Question" to add one.</p>
+            </div>
+        </div>
+
+        <!-- AI Practice 統計 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <h2 class="text-2xl font-bold text-slate-100 mb-4" data-i18n="practiceStatsTitle">📈 AI Practice 統計</h2>
+            
+            <!-- 概念統計 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-slate-200 mb-3" data-i18n="conceptStatsTitle">按概念統計</h3>
+                <div id="conceptStatsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <!-- 動態填充 -->
+                </div>
+            </div>
+
+            <!-- 難度統計 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-slate-200 mb-3" data-i18n="difficultyStatsTitle">按難度統計</h3>
+                <div id="difficultyStatsContainer" class="grid grid-cols-3 gap-3">
+                    <!-- 動態填充 -->
+                </div>
+            </div>
+
+            <!-- 題型統計 -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-200 mb-3" data-i18n="typeStatsTitle">按題型統計</h3>
+                <div id="typeStatsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <!-- 動態填充 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Practice 答題記錄 -->
+        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+                <h2 class="text-2xl font-bold text-slate-100" data-i18n="practiceRecordsTitle">✍️ AI Practice 答題記錄</h2>
+                <button onclick="refreshPracticeRecords()" class="glass-dark px-4 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition text-sm font-medium" data-i18n="refreshBtn">
+                    🔄 刷新
+                </button>
+            </div>
+
+            <!-- 篩選器 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <select id="conceptFilter" onchange="filterPracticeRecords()" 
+                        class="px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="" data-i18n="allConcepts">所有概念</option>
+                </select>
+                <select id="difficultyFilterSelect" onchange="filterPracticeRecords()"
+                        class="px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="" data-i18n="allDifficulties">所有難度</option>
+                    <option value="1" data-i18n="basicLevel">基礎</option>
+                    <option value="2" data-i18n="mediumLevel">中級</option>
+                    <option value="3" data-i18n="advancedLevel">進階</option>
+                </select>
+                <select id="correctFilter" onchange="filterPracticeRecords()"
+                        class="px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="" data-i18n="allResults">所有結果</option>
+                    <option value="true" data-i18n="correctOnly">僅正確</option>
+                    <option value="false" data-i18n="incorrectOnly">僅錯誤</option>
+                </select>
+                <input type="text" id="userFilter" placeholder="搜索用戶..." data-i18n-placeholder="searchUserPlaceholder"
+                       class="px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                       onkeyup="filterPracticeRecords()">
+            </div>
+
+            <!-- 載入動畫 -->
+            <div id="loadingRecords" class="text-center py-12 hidden">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+                <p class="text-slate-300" data-i18n="loadingRecords">載入記錄中...</p>
+            </div>
+
+            <!-- 答題記錄列表 -->
+            <div id="practiceRecordsContainer" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
+                <!-- 動態填充 -->
+            </div>
+
+            <!-- 無記錄提示 -->
+            <div id="noRecords" class="text-center py-12 hidden">
+                <p class="text-slate-400" data-i18n="noRecords">暫無答題記錄</p>
+            </div>
+
+            <!-- 分頁控制 -->
+            <div id="paginationContainer" class="flex items-center justify-center gap-4 mt-4 hidden">
+                <button onclick="loadPracticeRecords(currentPage - 1)" id="prevPageBtn" 
+                        class="glass-dark px-4 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← <span data-i18n="prevPage">上一頁</span>
+                </button>
+                <span id="pageInfo" class="text-slate-300"></span>
+                <button onclick="loadPracticeRecords(currentPage + 1)" id="nextPageBtn"
+                        class="glass-dark px-4 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span data-i18n="nextPage">下一頁</span> →
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- 用戶詳情Modal -->
@@ -167,10 +313,131 @@
         </div>
     </div>
 
+    <!-- 創建/編輯題目 Modal -->
+    <div id="questionModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50" onclick="closeQuestionModal(event)">
+        <div class="glass rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-slate-100" id="questionModalTitle">Create New Question</h3>
+                <button onclick="closeQuestionModal()" class="text-slate-400 hover:text-slate-200 text-2xl">&times;</button>
+            </div>
+            
+            <form id="questionForm" class="space-y-4">
+                <input type="hidden" id="editQuestionId" value="">
+                
+                <!-- 概念選擇 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Statistical Concept *</label>
+                    <select id="qConcept" required class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="">Select a concept...</option>
+                        <option value="Descriptive Statistics">Descriptive Statistics</option>
+                        <option value="Standard Deviation">Standard Deviation</option>
+                        <option value="One-Sample t-Test">One-Sample t-Test</option>
+                        <option value="Independent Samples t-Test">Independent Samples t-Test</option>
+                        <option value="Paired Samples t-Test">Paired Samples t-Test</option>
+                        <option value="Correlation Analysis">Correlation Analysis</option>
+                        <option value="Simple Regression">Simple Regression</option>
+                        <option value="Chi-Square Test">Chi-Square Test</option>
+                    </select>
+                </div>
+
+                <!-- 題型選擇 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Question Type *</label>
+                    <select id="qType" required onchange="toggleOptionsField()" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="">Select type...</option>
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="fill_blank">Fill in the Blank</option>
+                        <option value="open_ended">Open-Ended (AI Scoring)</option>
+                    </select>
+                </div>
+
+                <!-- 難度選擇 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Difficulty Level *</label>
+                    <div class="flex gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="qDifficulty" value="1" class="w-4 h-4 text-blue-500">
+                            <span class="text-blue-400">Basic</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="qDifficulty" value="2" checked class="w-4 h-4 text-yellow-500">
+                            <span class="text-yellow-400">Medium</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="qDifficulty" value="3" class="w-4 h-4 text-red-500">
+                            <span class="text-red-400">Advanced</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 題目內容 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Question Text *</label>
+                    <textarea id="qText" required rows="4" placeholder="Enter your question here. You can use LaTeX for math: $x^2$, $$\sum_{i=1}^n x_i$$" 
+                              class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+                </div>
+
+                <!-- 選項（僅選擇題顯示） -->
+                <div id="optionsContainer" class="hidden">
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Options (for Multiple Choice)</label>
+                    <div class="space-y-2">
+                        <input type="text" id="optionA" placeholder="A. First option" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="text" id="optionB" placeholder="B. Second option" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="text" id="optionC" placeholder="C. Third option" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <input type="text" id="optionD" placeholder="D. Fourth option" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                </div>
+
+                <!-- 正確答案 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Correct Answer *</label>
+                    <textarea id="qAnswer" required rows="2" placeholder="Enter the correct answer. For multiple choice: A, B, C, or D. For true/false: True or False. For open-ended: provide a model answer for AI reference."
+                              class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+                </div>
+
+                <!-- 解釋 -->
+                <div>
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Explanation (Optional)</label>
+                    <textarea id="qExplanation" rows="3" placeholder="Explain why this is the correct answer..."
+                              class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+                </div>
+
+                <!-- 提交按鈕 -->
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeQuestionModal()" class="px-6 py-2 bg-slate-600/50 text-slate-200 rounded-lg hover:bg-slate-500/50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="saveQuestionBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition font-medium">
+                        Save Question
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 查看題目詳情 Modal -->
+    <div id="questionDetailModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-50" onclick="closeQuestionDetailModal(event)">
+        <div class="glass rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-bold text-slate-100">Question Details</h3>
+                <button onclick="closeQuestionDetailModal()" class="text-slate-400 hover:text-slate-200 text-2xl">&times;</button>
+            </div>
+            <div id="questionDetailContent">
+                <!-- 動態內容 -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // 全局變量
         let allUsers = [];
         let systemStats = null;
+        let allPracticeRecords = [];
+        let filteredRecords = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let practiceStats = null;
 
         // 檢查管理員權限
         function checkAdminAuth() {
@@ -337,6 +604,301 @@
             loadSystemStats();
         }
 
+        // ========== AI Practice 統計和記錄 ==========
+
+        // 載入 AI Practice 統計
+        async function loadPracticeStats() {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/practice-stats', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    practiceStats = data.stats;
+                    displayPracticeStats(data.stats);
+                    populateConceptFilter(data.stats.byConcept);
+                }
+            } catch (error) {
+                console.error('獲取練習統計失敗:', error);
+            }
+        }
+
+        // 概念名稱映射（中文 -> 英文）
+        const CONCEPT_NAME_MAP = {
+            '描述統計': 'Descriptive Statistics',
+            '描述统计': 'Descriptive Statistics',
+            '標準差': 'Standard Deviation',
+            '标准差': 'Standard Deviation',
+            '單樣本t檢定': 'One-Sample t-Test',
+            '单样本t检定': 'One-Sample t-Test',
+            '獨立樣本t檢定': 'Independent Samples t-Test',
+            '独立样本t检定': 'Independent Samples t-Test',
+            '配對樣本t檢定': 'Paired Samples t-Test',
+            '配对样本t检定': 'Paired Samples t-Test',
+            '相關分析': 'Correlation Analysis',
+            '相关分析': 'Correlation Analysis',
+            '簡單迴歸': 'Simple Regression',
+            '简单回归': 'Simple Regression',
+            '卡方檢定': 'Chi-Square Test',
+            '卡方检定': 'Chi-Square Test'
+        };
+
+        // 將概念名稱轉為英文
+        function toEnglishConcept(conceptName) {
+            return CONCEPT_NAME_MAP[conceptName] || conceptName;
+        }
+
+        // 顯示練習統計
+        function displayPracticeStats(stats) {
+            const isZh = langManager.getCurrentLanguage() === 'zh-TW';
+            
+            // 概念統計
+            const conceptContainer = document.getElementById('conceptStatsContainer');
+            conceptContainer.innerHTML = stats.byConcept.map(c => {
+                const conceptName = toEnglishConcept(c.concept);
+                return `
+                <div class="stat-card glass-dark rounded-lg p-3 border border-slate-600/30">
+                    <div class="text-sm font-medium text-slate-200 mb-1 truncate" title="${conceptName}">${conceptName}</div>
+                    <div class="flex items-end justify-between">
+                        <div>
+                            <span class="text-lg font-bold text-blue-400">${c.total}</span>
+                            <span class="text-xs text-slate-400 ml-1">${isZh ? '題' : 'Q'}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-semibold ${parseFloat(c.accuracy) >= 60 ? 'text-green-400' : 'text-orange-400'}">${c.accuracy}%</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full ${parseFloat(c.accuracy) >= 60 ? 'bg-green-500' : 'bg-orange-500'}" style="width: ${c.accuracy}%"></div>
+                    </div>
+                </div>
+            `}).join('');
+
+            // 難度統計
+            const difficultyContainer = document.getElementById('difficultyStatsContainer');
+            const diffColors = ['blue', 'yellow', 'red'];
+            const diffNames = isZh ? ['基礎', '中級', '進階'] : ['Basic', 'Medium', 'Advanced'];
+            difficultyContainer.innerHTML = stats.byDifficulty.map((d, i) => `
+                <div class="stat-card glass-dark rounded-lg p-4 border border-${diffColors[i]}-500/30 text-center">
+                    <div class="text-sm font-medium text-${diffColors[i]}-400 mb-2">${diffNames[i]}</div>
+                    <div class="text-2xl font-bold text-slate-100">${d.total}</div>
+                    <div class="text-sm text-slate-400 mt-1">${isZh ? '正確率' : 'Accuracy'}: ${d.accuracy}%</div>
+                    <div class="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-${diffColors[i]}-500" style="width: ${d.accuracy}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 題型統計
+            const typeContainer = document.getElementById('typeStatsContainer');
+            const typeNames = {
+                'multiple_choice': isZh ? '選擇題' : 'Multiple Choice',
+                'case_study': isZh ? '案例分析' : 'Case Study',
+                'calculation': isZh ? '計算題' : 'Calculation',
+                'interpretation': isZh ? '解讀題' : 'Interpretation',
+                'short_answer': isZh ? '簡答題' : 'Short Answer'
+            };
+            typeContainer.innerHTML = stats.byType.map(t => `
+                <div class="stat-card glass-dark rounded-lg p-3 border border-purple-500/30">
+                    <div class="text-sm font-medium text-purple-400 mb-1">${typeNames[t.type] || t.type}</div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-lg font-bold text-slate-100">${t.total}</span>
+                        <span class="text-sm ${parseFloat(t.accuracy) >= 60 ? 'text-green-400' : 'text-orange-400'}">${t.accuracy}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 填充概念篩選器
+        function populateConceptFilter(concepts) {
+            const select = document.getElementById('conceptFilter');
+            select.innerHTML = `<option value="">All Concepts</option>` +
+                concepts.map(c => {
+                    const englishName = toEnglishConcept(c.concept);
+                    return `<option value="${c.concept}">${englishName}</option>`;
+                }).join('');
+        }
+
+        // 載入答題記錄
+        async function loadPracticeRecords(page = 1) {
+            try {
+                document.getElementById('loadingRecords').classList.remove('hidden');
+                document.getElementById('practiceRecordsContainer').classList.add('hidden');
+                document.getElementById('noRecords').classList.add('hidden');
+
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/practice-records?page=${page}&limit=20`, {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allPracticeRecords = data.records;
+                    filteredRecords = [...allPracticeRecords];
+                    currentPage = data.pagination.page;
+                    totalPages = data.pagination.totalPages;
+                    
+                    filterPracticeRecords();
+                    updatePagination(data.pagination);
+                }
+            } catch (error) {
+                console.error('獲取答題記錄失敗:', error);
+                document.getElementById('loadingRecords').classList.add('hidden');
+                document.getElementById('noRecords').classList.remove('hidden');
+            }
+        }
+
+        // 篩選答題記錄
+        function filterPracticeRecords() {
+            const conceptFilter = document.getElementById('conceptFilter').value.toLowerCase();
+            const difficultyFilter = document.getElementById('difficultyFilterSelect').value;
+            const correctFilter = document.getElementById('correctFilter').value;
+            const userFilter = document.getElementById('userFilter').value.toLowerCase();
+
+            filteredRecords = allPracticeRecords.filter(record => {
+                const matchConcept = !conceptFilter || 
+                    (record.practice_questions?.concept_name?.toLowerCase().includes(conceptFilter));
+                const matchDifficulty = !difficultyFilter || 
+                    (record.practice_questions?.difficulty_level === parseInt(difficultyFilter));
+                const matchCorrect = correctFilter === '' || 
+                    (record.is_correct === (correctFilter === 'true'));
+                const matchUser = !userFilter || 
+                    (record.users?.username?.toLowerCase().includes(userFilter));
+                
+                return matchConcept && matchDifficulty && matchCorrect && matchUser;
+            });
+
+            displayPracticeRecords(filteredRecords);
+        }
+
+        // 顯示答題記錄
+        function displayPracticeRecords(records) {
+            document.getElementById('loadingRecords').classList.add('hidden');
+            
+            const container = document.getElementById('practiceRecordsContainer');
+            
+            if (records.length === 0) {
+                container.classList.add('hidden');
+                document.getElementById('noRecords').classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            document.getElementById('noRecords').classList.add('hidden');
+
+            const isZh = langManager.getCurrentLanguage() === 'zh-TW';
+            const diffNames = { 1: 'Basic', 2: 'Medium', 3: 'Advanced' };
+            const typeNames = {
+                'multiple_choice': 'MC',
+                'case_study': 'Case',
+                'calculation': 'Calc',
+                'interpretation': 'Interp',
+                'short_answer': 'Short'
+            };
+
+            container.innerHTML = records.map(record => {
+                const q = record.practice_questions || {};
+                const username = record.users?.username || 'Unknown';
+                const questionText = q.question_text || 'N/A';
+                const shortQuestion = questionText.length > 100 ? questionText.substring(0, 100) + '...' : questionText;
+                const conceptName = toEnglishConcept(q.concept_name) || 'N/A';
+                
+                return `
+                <div class="glass-dark rounded-xl p-4 border border-slate-600/40 hover:border-slate-500/60 transition">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <!-- 用戶和時間 -->
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                    ${username.charAt(0).toUpperCase()}
+                                </div>
+                                <span class="font-medium text-slate-200">${username}</span>
+                                <span class="text-xs text-slate-500">•</span>
+                                <span class="text-xs text-slate-400">${formatDate(record.answered_at)}</span>
+                            </div>
+                            
+                            <!-- 題目 -->
+                            <p class="text-slate-300 text-sm mb-2 leading-relaxed">${shortQuestion}</p>
+                            
+                            <!-- 標籤 -->
+                            <div class="flex flex-wrap items-center gap-2 text-xs">
+                                <span class="px-2 py-1 rounded bg-blue-500/20 text-blue-300">${conceptName}</span>
+                                <span class="px-2 py-1 rounded bg-slate-600/40 text-slate-300">${diffNames[q.difficulty_level] || 'N/A'}</span>
+                                <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-300">${typeNames[q.question_type] || q.question_type || 'N/A'}</span>
+                                ${record.time_taken ? `<span class="text-slate-400">⏱ ${record.time_taken}s</span>` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- 結果標記 -->
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-2xl">${record.is_correct ? '✅' : '❌'}</span>
+                            <span class="text-xs ${record.is_correct ? 'text-green-400' : 'text-red-400'}">${record.is_correct ? (isZh ? '正確' : 'Correct') : (isZh ? '錯誤' : 'Wrong')}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 展開查看詳情 -->
+                    <details class="mt-3">
+                        <summary class="text-xs text-blue-400 cursor-pointer hover:text-blue-300">${isZh ? '查看詳情' : 'View Details'}</summary>
+                        <div class="mt-3 space-y-2 text-sm">
+                            <div class="p-3 bg-slate-700/30 rounded-lg">
+                                <div class="text-slate-400 text-xs mb-1">${isZh ? '完整題目' : 'Full Question'}:</div>
+                                <div class="text-slate-200">${questionText}</div>
+                            </div>
+                            <div class="p-3 bg-slate-700/30 rounded-lg">
+                                <div class="text-slate-400 text-xs mb-1">${isZh ? '用戶答案' : 'User Answer'}:</div>
+                                <div class="${record.is_correct ? 'text-green-300' : 'text-red-300'}">${record.user_answer || 'N/A'}</div>
+                            </div>
+                            <div class="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                                <div class="text-green-400 text-xs mb-1">${isZh ? '正確答案' : 'Correct Answer'}:</div>
+                                <div class="text-green-200">${q.correct_answer || 'N/A'}</div>
+                            </div>
+                            ${q.explanation ? `
+                            <div class="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                                <div class="text-blue-400 text-xs mb-1">${isZh ? '解釋' : 'Explanation'}:</div>
+                                <div class="text-slate-300">${q.explanation}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </details>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 更新分頁
+        function updatePagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const isZh = langManager.getCurrentLanguage() === 'zh-TW';
+
+            if (pagination.totalPages > 1) {
+                container.classList.remove('hidden');
+                pageInfo.textContent = isZh 
+                    ? `第 ${pagination.page} / ${pagination.totalPages} 頁 (共 ${pagination.total} 條)`
+                    : `Page ${pagination.page} / ${pagination.totalPages} (${pagination.total} total)`;
+                
+                prevBtn.disabled = pagination.page <= 1;
+                nextBtn.disabled = pagination.page >= pagination.totalPages;
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // 刷新答題記錄
+        function refreshPracticeRecords() {
+            loadPracticeStats();
+            loadPracticeRecords(1);
+        }
+
         // 顯示用戶詳情
         async function showUserDetails(userId) {
             try {
@@ -361,16 +923,20 @@
             }
         }
 
+        // 當前查看的用戶ID（用於導出）
+        let currentViewingUserId = null;
+
         // 顯示用戶詳情Modal內容
         function displayUserDetails(data) {
             const { user, progress, recentAnswers, recentSessions } = data;
+            currentViewingUserId = user.user_id;
             
-            const basicInfoText = langManager.getCurrentLanguage() === 'zh-TW' ? '基本信息' : 'Basic Info';
-            const usernameText = langManager.t('usernameLabel', 'admin');
-            const userIdText = langManager.t('userIdLabel', 'admin');
-            const createdAtText = langManager.t('createdAtLabel', 'admin');
-            const lastActiveText = langManager.getCurrentLanguage() === 'zh-TW' ? '最後活動' : 'Last Active';
-            const levelText = langManager.getCurrentLanguage() === 'zh-TW' ? '學習等級' : 'Level';
+            const basicInfoText = 'Basic Info';
+            const usernameText = 'Username';
+            const userIdText = 'User ID';
+            const createdAtText = 'Created At';
+            const lastActiveText = 'Last Active';
+            const levelText = 'Level';
             const emailText = langManager.getCurrentLanguage() === 'zh-TW' ? '電郵' : 'Email';
             const notSetText = langManager.getCurrentLanguage() === 'zh-TW' ? '未設置' : 'Not set';
             const learningProgressTitle = langManager.t('learningProgressTitle', 'admin');
@@ -439,7 +1005,7 @@
                                                 <span>•</span>
                                                 <span>${langManager.getCurrentLanguage() === 'zh-TW' ? '難度' : 'Difficulty'} ${a.practice_questions?.difficulty_level}</span>
                                                 <span>•</span>
-                                                <span>${formatDate(a.created_at)}</span>
+                                                <span>${formatDate(a.answered_at)}</span>
                                             </div>
                                         </div>
                                         <span class="${a.is_correct ? 'text-green-400' : 'text-red-400'} font-medium ml-2">
@@ -447,38 +1013,574 @@
                                         </span>
                                     </div>
                                 </div>
-                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">${langManager.getCurrentLanguage() === 'zh-TW' ? '暫無答題記錄' : 'No answer records'}</p>`}
+                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">No answer records</p>`}
                         </div>
                     </div>
 
                     <!-- 聊天會話 -->
                     <div class="glass-dark rounded-xl p-4">
-                        <h4 class="font-semibold text-slate-100 mb-3 flex items-center gap-2">
-                            <span>💬</span> ${langManager.getCurrentLanguage() === 'zh-TW' ? '聊天會話歷史' : 'Chat Session History'}
-                        </h4>
-                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-slate-100 flex items-center gap-2">
+                                <span>💬</span> Chat Session History
+                            </h4>
+                            <button onclick="exportUserChats('${user.user_id}')" class="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded hover:bg-blue-500/30 transition">
+                                📥 Export Chats
+                            </button>
+                        </div>
+                        <div class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
                             ${recentSessions.length > 0 ? recentSessions.map(s => `
-                                <div class="bg-slate-700/30 rounded p-3 text-sm">
-                                    <div class="flex items-center justify-between">
+                                <div class="bg-slate-700/30 rounded-lg p-3 text-sm cursor-pointer hover:bg-slate-600/40 transition" onclick="loadSessionMessages('${s.session_id}')">
+                                    <div class="flex items-center justify-between mb-2">
                                         <div>
-                                            <p class="text-slate-100">${s.topic || (langManager.getCurrentLanguage() === 'zh-TW' ? '一般對話' : 'General Conversation')}</p>
+                                            <p class="text-slate-100 font-medium">${s.topic || 'General Conversation'}</p>
                                             <p class="text-xs text-slate-400 mt-1">${formatDate(s.start_time)}</p>
                                         </div>
                                         <div class="text-right">
-                                            <p class="text-slate-300">${s.message_count} ${langManager.getCurrentLanguage() === 'zh-TW' ? '條消息' : 'messages'}</p>
+                                            <p class="text-slate-300">${s.message_count || 0} messages</p>
                                             <p class="text-xs ${s.is_active ? 'text-green-400' : 'text-slate-400'} mt-1">
-                                                ${s.is_active ? (langManager.getCurrentLanguage() === 'zh-TW' ? '進行中' : 'Active') : (langManager.getCurrentLanguage() === 'zh-TW' ? '已結束' : 'Ended')}
+                                                ${s.is_active ? 'Active' : 'Ended'}
                                             </p>
                                         </div>
                                     </div>
+                                    <div class="text-xs text-blue-400 flex items-center gap-1">
+                                        <span>👁️</span> Click to view messages
+                                    </div>
                                 </div>
-                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">${langManager.getCurrentLanguage() === 'zh-TW' ? '暫無會話記錄' : 'No session records'}</p>`}
+                            `).join('') : `<p class="text-slate-400 text-sm text-center py-4">No session records</p>`}
                         </div>
                     </div>
                 </div>
             `;
             
             document.getElementById('userModalContent').innerHTML = content;
+        }
+
+        // 載入會話的詳細消息
+        async function loadSessionMessages(sessionId) {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/sessions/${sessionId}/messages`, {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSessionMessagesModal(data.session, data.messages);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Failed to load messages:', error);
+                alert('Failed to load chat messages');
+            }
+        }
+
+        // 顯示會話消息詳情
+        function showSessionMessagesModal(session, messages) {
+            const username = session.users?.username || 'Unknown';
+            const modalContent = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-lg font-semibold text-slate-100">${session.topic || 'General Conversation'}</h4>
+                            <p class="text-sm text-slate-400">User: ${username} • ${formatDate(session.start_time)} • ${messages.length} messages</p>
+                        </div>
+                        <button onclick="displayUserDetails({user: {user_id: '${session.user_id}'}, progress: [], recentAnswers: [], recentSessions: []}); showUserDetails('${session.user_id}')" class="text-sm text-blue-400 hover:text-blue-300">
+                            ← Back
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
+                        ${messages.length > 0 ? messages.map(m => `
+                            <div class="flex ${m.sender_type === 'user' ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-[80%] ${m.sender_type === 'user' 
+                                    ? 'bg-blue-600/40 border-blue-500/50' 
+                                    : 'bg-slate-700/60 border-slate-600/50'} border rounded-xl p-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-xs font-medium ${m.sender_type === 'user' ? 'text-blue-300' : 'text-green-300'}">
+                                            ${m.sender_type === 'user' ? '👤 User' : '🤖 AI'}
+                                        </span>
+                                        <span class="text-xs text-slate-500">${new Date(m.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    <div class="text-sm text-slate-200 whitespace-pre-wrap break-words">${escapeHtml(m.content)}</div>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="text-slate-400 text-center py-8">No messages in this session</p>'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userModalContent').innerHTML = modalContent;
+        }
+
+        // HTML 轉義函數
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 導出單個用戶的聊天記錄
+        async function exportUserChats(userId) {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/users/${userId}/export-chats`, {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    downloadJson(data, `chat_export_${data.user.username}_${new Date().toISOString().split('T')[0]}.json`);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Failed to export chat records');
+            }
+        }
+
+        // 導出所有用戶的聊天記錄
+        async function exportAllChats() {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/export-all-chats', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    downloadJson(data, `all_chats_export_${new Date().toISOString().split('T')[0]}.json`);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Failed to export chat records');
+            }
+        }
+
+        // 下載 JSON 文件
+        function downloadJson(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ========== 老師題目管理功能 ==========
+        let allTeacherQuestions = [];
+        let teacherQuestionStats = null;
+
+        // 載入老師題目統計
+        async function loadTeacherQuestionStats() {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/teacher-questions-stats', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    teacherQuestionStats = data.stats;
+                    displayTeacherStats(data.stats);
+                }
+            } catch (error) {
+                console.error('Failed to load teacher question stats:', error);
+            }
+        }
+
+        // 顯示老師題目統計
+        function displayTeacherStats(stats) {
+            document.getElementById('teacherTotalQuestions').textContent = stats.totalQuestions;
+            document.getElementById('teacherActiveQuestions').textContent = stats.activeQuestions;
+            document.getElementById('teacherTotalAnswers').textContent = stats.totalAnswers;
+            document.getElementById('teacherAvgAccuracy').textContent = stats.accuracy + '%';
+        }
+
+        // 載入老師題目列表
+        async function loadTeacherQuestions() {
+            try {
+                document.getElementById('loadingTeacherQuestions').classList.remove('hidden');
+                document.getElementById('teacherQuestionsContainer').classList.add('hidden');
+                document.getElementById('noTeacherQuestions').classList.add('hidden');
+
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/teacher-questions?limit=50', {
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allTeacherQuestions = data.questions;
+                    displayTeacherQuestions(data.questions);
+                    loadTeacherQuestionStats();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Failed to load teacher questions:', error);
+                document.getElementById('loadingTeacherQuestions').classList.add('hidden');
+                document.getElementById('noTeacherQuestions').classList.remove('hidden');
+            }
+        }
+
+        // 顯示老師題目列表
+        function displayTeacherQuestions(questions) {
+            document.getElementById('loadingTeacherQuestions').classList.add('hidden');
+            
+            const container = document.getElementById('teacherQuestionsContainer');
+            
+            if (questions.length === 0) {
+                container.classList.add('hidden');
+                document.getElementById('noTeacherQuestions').classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            document.getElementById('noTeacherQuestions').classList.add('hidden');
+
+            const diffNames = { 1: 'Basic', 2: 'Medium', 3: 'Advanced' };
+            const diffColors = { 1: 'blue', 2: 'yellow', 3: 'red' };
+            const typeNames = {
+                'multiple_choice': 'Multiple Choice',
+                'true_false': 'True/False',
+                'fill_blank': 'Fill in Blank',
+                'open_ended': 'Open-Ended'
+            };
+
+            container.innerHTML = questions.map(q => {
+                const shortText = q.question_text.length > 120 ? q.question_text.substring(0, 120) + '...' : q.question_text;
+                const diffColor = diffColors[q.difficulty_level] || 'slate';
+                return `
+                <div class="glass-dark rounded-xl p-4 border ${q.is_active ? 'border-slate-600/40' : 'border-red-500/30 opacity-60'} hover:border-slate-500/60 transition">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <!-- 標籤 -->
+                            <div class="flex flex-wrap items-center gap-2 mb-2 text-xs">
+                                <span class="px-2 py-1 rounded bg-green-500/20 text-green-300">${q.concept_name || 'N/A'}</span>
+                                <span class="px-2 py-1 rounded bg-${diffColor}-500/20 text-${diffColor}-300">${diffNames[q.difficulty_level]}</span>
+                                <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-300">${typeNames[q.question_type] || q.question_type}</span>
+                                ${!q.is_active ? '<span class="px-2 py-1 rounded bg-red-500/20 text-red-400">Inactive</span>' : ''}
+                            </div>
+                            
+                            <!-- 題目內容 -->
+                            <p class="text-slate-200 text-sm mb-2 leading-relaxed">${escapeHtml(shortText)}</p>
+                            
+                            <!-- 時間 -->
+                            <p class="text-xs text-slate-500">Created: ${formatDate(q.created_at)}</p>
+                        </div>
+                        
+                        <!-- 操作按鈕 -->
+                        <div class="flex flex-col gap-2">
+                            <button onclick="viewQuestionDetail('${q.question_id}')" class="text-xs px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition">
+                                👁️ View
+                            </button>
+                            <button onclick="editQuestion('${q.question_id}')" class="text-xs px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded hover:bg-yellow-500/30 transition">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="toggleQuestionStatus('${q.question_id}')" class="text-xs px-3 py-1.5 ${q.is_active ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'} rounded hover:opacity-80 transition">
+                                ${q.is_active ? '⏸️ Disable' : '▶️ Enable'}
+                            </button>
+                            <button onclick="deleteQuestion('${q.question_id}')" class="text-xs px-3 py-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 查看題目詳情
+        async function viewQuestionDetail(questionId) {
+            const question = allTeacherQuestions.find(q => q.question_id === questionId);
+            if (!question) return;
+
+            const diffNames = { 1: 'Basic', 2: 'Medium', 3: 'Advanced' };
+            const typeNames = {
+                'multiple_choice': 'Multiple Choice',
+                'true_false': 'True/False',
+                'fill_blank': 'Fill in Blank',
+                'open_ended': 'Open-Ended (AI Scoring)'
+            };
+
+            let optionsHtml = '';
+            if (question.question_type === 'multiple_choice' && question.options) {
+                const opts = question.options;
+                optionsHtml = `
+                    <div class="glass-dark rounded-lg p-4 border border-slate-600/40">
+                        <h5 class="text-sm font-medium text-slate-400 mb-2">Options:</h5>
+                        <div class="space-y-2">
+                            ${Object.entries(opts).map(([key, value]) => `
+                                <div class="flex items-center gap-2 ${question.correct_answer.toUpperCase() === key ? 'text-green-400' : 'text-slate-200'}">
+                                    <span class="font-bold">${key}.</span> ${escapeHtml(value)}
+                                    ${question.correct_answer.toUpperCase() === key ? '<span class="text-green-400">✓</span>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const content = `
+                <div class="space-y-4">
+                    <!-- 標籤 -->
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-300">${question.concept_name}</span>
+                        <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300">${diffNames[question.difficulty_level]}</span>
+                        <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300">${typeNames[question.question_type]}</span>
+                        <span class="px-3 py-1 rounded-full ${question.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                            ${question.is_active ? '✓ Active' : '✗ Inactive'}
+                        </span>
+                    </div>
+
+                    <!-- 題目 -->
+                    <div class="glass-dark rounded-lg p-4 border border-slate-600/40">
+                        <h5 class="text-sm font-medium text-slate-400 mb-2">Question:</h5>
+                        <p class="text-slate-100 leading-relaxed">${escapeHtml(question.question_text)}</p>
+                    </div>
+
+                    ${optionsHtml}
+
+                    <!-- 正確答案 -->
+                    <div class="glass-dark rounded-lg p-4 border border-green-500/30 bg-green-500/5">
+                        <h5 class="text-sm font-medium text-green-400 mb-2">Correct Answer:</h5>
+                        <p class="text-green-200">${escapeHtml(question.correct_answer)}</p>
+                    </div>
+
+                    ${question.explanation ? `
+                    <!-- 解釋 -->
+                    <div class="glass-dark rounded-lg p-4 border border-blue-500/30 bg-blue-500/5">
+                        <h5 class="text-sm font-medium text-blue-400 mb-2">Explanation:</h5>
+                        <p class="text-slate-200">${escapeHtml(question.explanation)}</p>
+                    </div>
+                    ` : ''}
+
+                    <!-- 元信息 -->
+                    <div class="text-xs text-slate-500 pt-2 border-t border-slate-600/40">
+                        <p>Created: ${new Date(question.created_at).toLocaleString()}</p>
+                        <p>Question ID: ${question.question_id}</p>
+                    </div>
+
+                    <!-- 操作按鈕 -->
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeQuestionDetailModal(); editQuestion('${question.question_id}')" 
+                                class="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="closeQuestionDetailModal(); toggleQuestionStatus('${question.question_id}')" 
+                                class="px-4 py-2 ${question.is_active ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'} rounded-lg hover:opacity-80 transition">
+                            ${question.is_active ? '⏸️ Disable' : '▶️ Enable'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('questionDetailContent').innerHTML = content;
+            document.getElementById('questionDetailModal').classList.remove('hidden');
+        }
+
+        // 關閉題目詳情 Modal
+        function closeQuestionDetailModal(event) {
+            if (!event || event.target.id === 'questionDetailModal') {
+                document.getElementById('questionDetailModal').classList.add('hidden');
+            }
+        }
+
+        // 顯示創建題目表單
+        function showCreateQuestionForm() {
+            document.getElementById('questionModalTitle').textContent = 'Create New Question';
+            document.getElementById('editQuestionId').value = '';
+            document.getElementById('questionForm').reset();
+            document.getElementById('optionsContainer').classList.add('hidden');
+            document.getElementById('questionModal').classList.remove('hidden');
+        }
+
+        // 編輯題目
+        async function editQuestion(questionId) {
+            const question = allTeacherQuestions.find(q => q.question_id === questionId);
+            if (!question) return;
+
+            document.getElementById('questionModalTitle').textContent = 'Edit Question';
+            document.getElementById('editQuestionId').value = questionId;
+            document.getElementById('qConcept').value = question.concept_name;
+            document.getElementById('qType').value = question.question_type;
+            document.getElementById('qText').value = question.question_text;
+            document.getElementById('qAnswer').value = question.correct_answer;
+            document.getElementById('qExplanation').value = question.explanation || '';
+            
+            // 設置難度
+            const diffRadio = document.querySelector(`input[name="qDifficulty"][value="${question.difficulty_level}"]`);
+            if (diffRadio) diffRadio.checked = true;
+
+            // 設置選項
+            toggleOptionsField();
+            if (question.question_type === 'multiple_choice' && question.options) {
+                const options = question.options;
+                document.getElementById('optionA').value = options.A || options[0] || '';
+                document.getElementById('optionB').value = options.B || options[1] || '';
+                document.getElementById('optionC').value = options.C || options[2] || '';
+                document.getElementById('optionD').value = options.D || options[3] || '';
+            }
+
+            document.getElementById('questionModal').classList.remove('hidden');
+        }
+
+        // 切換選項欄位顯示
+        function toggleOptionsField() {
+            const type = document.getElementById('qType').value;
+            const container = document.getElementById('optionsContainer');
+            if (type === 'multiple_choice') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // 關閉題目表單
+        function closeQuestionModal(event) {
+            if (!event || event.target.id === 'questionModal') {
+                document.getElementById('questionModal').classList.add('hidden');
+            }
+        }
+
+        // 保存題目
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('questionForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const questionId = document.getElementById('editQuestionId').value;
+                const isEdit = !!questionId;
+
+                const concept = document.getElementById('qConcept').value;
+                const type = document.getElementById('qType').value;
+                const difficulty = parseInt(document.querySelector('input[name="qDifficulty"]:checked').value);
+                const text = document.getElementById('qText').value;
+                const answer = document.getElementById('qAnswer').value;
+                const explanation = document.getElementById('qExplanation').value;
+
+                // 組裝選項
+                let options = null;
+                if (type === 'multiple_choice') {
+                    options = {
+                        A: document.getElementById('optionA').value,
+                        B: document.getElementById('optionB').value,
+                        C: document.getElementById('optionC').value,
+                        D: document.getElementById('optionD').value
+                    };
+                }
+
+                try {
+                    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                    const url = isEdit 
+                        ? `/api/admin/teacher-questions/${questionId}`
+                        : '/api/admin/teacher-questions';
+                    
+                    const response = await fetch(url, {
+                        method: isEdit ? 'PUT' : 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Admin-Auth': `admin-${currentUser.username}123`
+                        },
+                        body: JSON.stringify({
+                            concept_name: concept,
+                            question_type: type,
+                            difficulty_level: difficulty,
+                            question_text: text,
+                            correct_answer: answer,
+                            explanation: explanation,
+                            options: options
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(isEdit ? 'Question updated successfully!' : 'Question created successfully!');
+                        closeQuestionModal();
+                        loadTeacherQuestions();
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Failed to save question:', error);
+                    alert('Failed to save question: ' + error.message);
+                }
+            });
+        });
+
+        // 切換題目狀態
+        async function toggleQuestionStatus(questionId) {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/teacher-questions/${questionId}/toggle`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadTeacherQuestions();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Failed to toggle question status:', error);
+                alert('Failed to toggle question status');
+            }
+        }
+
+        // 刪除題目
+        async function deleteQuestion(questionId) {
+            if (!confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch(`/api/admin/teacher-questions/${questionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Question deleted successfully!');
+                    loadTeacherQuestions();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Failed to delete question:', error);
+                alert('Failed to delete question');
+            }
         }
 
         // 關閉用戶詳情Modal
@@ -563,8 +1665,10 @@
             initLanguage();
             loadSystemStats();
             loadUsers();
+            loadPracticeStats();
+            loadPracticeRecords(1);
+            loadTeacherQuestions();
         }
     </script>
 </body>
 </html>
-

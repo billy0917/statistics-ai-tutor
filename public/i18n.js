@@ -50,6 +50,7 @@ const i18n = {
             thinkingMsg: 'AI 正在思考中',
             userStatus: '已登入',
             logoutBtn: '登出',
+            newChatBtn: '🔄 新對話',
             loggedInStatus: '已登入 • 學習進度已追蹤',
             footer: '由 AI 技術驅動 • 專業統計學教學助理'
         },
@@ -101,6 +102,7 @@ const i18n = {
             hintBtn: '💡 提示',
             explanationTitle: '📖 詳細解釋',
             nextBtn: '下一題 →',
+            tryAgainBtn: '🔄 再試一次',
             loadingMsg: '正在生成題目...',
             correctFeedback: '回答正確！',
             incorrectFeedback: '回答錯誤',
@@ -149,6 +151,7 @@ const i18n = {
             submitBtn: '提交答案',
             explanationTitle: '📖 詳細解釋',
             nextBtn: '下一題 →',
+            tryAgainBtn: '🔄 再試一次',
             summaryTitle: '練習完成！',
             summarySubtitle: '恭喜你完成了這次練習',
             totalQuestions: '總題數',
@@ -212,7 +215,26 @@ const i18n = {
             noPracticeSessions: '暫無練習記錄',
             totalConceptsTracked: '追蹤概念數',
             learningConcepts: '學習概念',
-            masteryLabel: '掌握度'
+            masteryLabel: '掌握度',
+            // AI Practice 統計和記錄
+            practiceStatsTitle: '📈 AI Practice 統計',
+            conceptStatsTitle: '按概念統計',
+            difficultyStatsTitle: '按難度統計',
+            typeStatsTitle: '按題型統計',
+            practiceRecordsTitle: '✍️ AI Practice 答題記錄',
+            allConcepts: '所有概念',
+            allDifficulties: '所有難度',
+            basicLevel: '基礎',
+            mediumLevel: '中級',
+            advancedLevel: '進階',
+            allResults: '所有結果',
+            correctOnly: '僅正確',
+            incorrectOnly: '僅錯誤',
+            searchUserPlaceholder: '搜索用戶...',
+            loadingRecords: '載入記錄中...',
+            noRecords: '暫無答題記錄',
+            prevPage: '上一頁',
+            nextPage: '下一頁'
         }
     },
 
@@ -266,6 +288,7 @@ const i18n = {
             thinkingMsg: 'AI is thinking',
             userStatus: 'Logged in',
             logoutBtn: 'Logout',
+            newChatBtn: '🔄 New Chat',
             loggedInStatus: 'Logged in • Progress tracked',
             footer: 'Powered by AI • Professional Statistics Teaching Assistant'
         },
@@ -317,6 +340,7 @@ const i18n = {
             hintBtn: '💡 Hint',
             explanationTitle: '📖 Detailed Explanation',
             nextBtn: 'Next Question →',
+            tryAgainBtn: '🔄 Try Again',
             loadingMsg: 'Generating question...',
             correctFeedback: 'Correct!',
             incorrectFeedback: 'Incorrect',
@@ -365,6 +389,7 @@ const i18n = {
             submitBtn: 'Submit Answer',
             explanationTitle: '📖 Detailed Explanation',
             nextBtn: 'Next Question →',
+            tryAgainBtn: '🔄 Try Again',
             summaryTitle: 'Practice Complete!',
             summarySubtitle: 'Congratulations on completing this practice session',
             totalQuestions: 'Total Questions',
@@ -428,7 +453,26 @@ const i18n = {
             noPracticeSessions: 'No practice sessions',
             totalConceptsTracked: 'Concepts Tracked',
             learningConcepts: 'Learning Concepts',
-            masteryLabel: 'Mastery'
+            masteryLabel: 'Mastery',
+            // AI Practice Stats and Records
+            practiceStatsTitle: '📈 AI Practice Statistics',
+            conceptStatsTitle: 'By Concept',
+            difficultyStatsTitle: 'By Difficulty',
+            typeStatsTitle: 'By Question Type',
+            practiceRecordsTitle: '✍️ AI Practice Records',
+            allConcepts: 'All Concepts',
+            allDifficulties: 'All Difficulties',
+            basicLevel: 'Basic',
+            mediumLevel: 'Medium',
+            advancedLevel: 'Advanced',
+            allResults: 'All Results',
+            correctOnly: 'Correct Only',
+            incorrectOnly: 'Incorrect Only',
+            searchUserPlaceholder: 'Search user...',
+            loadingRecords: 'Loading records...',
+            noRecords: 'No practice records',
+            prevPage: 'Previous',
+            nextPage: 'Next'
         }
     }
 };

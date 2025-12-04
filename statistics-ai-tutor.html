@@ -488,7 +488,8 @@
                         <a href="/" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-purple-600 transition-all transform hover:scale-105 font-medium shadow-lg" data-i18n="navAiChat">
                             💬 AI 對話
                         </a>
-                        <a href="/question-bank.html" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-green-600 transition-all transform hover:scale-105 font-medium shadow-lg relative">
+                        <!-- 暫時隱藏題庫練習按鈕 -->
+                        <a href="/question-bank.html" class="glass-dark px-6 py-3 rounded-xl text-slate-200 hover:bg-green-600 transition-all transform hover:scale-105 font-medium shadow-lg relative hidden">
                             <span data-i18n="navQuestionBank">📖 題庫練習</span>
                             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full" data-i18n="newBadge">New</span>
                         </a>
@@ -506,7 +507,7 @@
             <div class="glass rounded-3xl card-shadow overflow-hidden animate-fadeInUp animate-delay-300">
                 
                 <!-- 聊天區域 -->
-                <div class="h-96 md:h-[500px] flex flex-col">
+                <div class="h-[600px] md:h-[700px] lg:h-[750px] flex flex-col">
                     
                     <!-- 訊息容器 -->
                     <div id="messages" class="flex-1 overflow-y-auto p-6 custom-scrollbar">
@@ -579,18 +580,6 @@
                             </div>
                         </div>
                         
-                        <!-- 載入動畫 -->
-                        <div id="loading" class="hidden flex items-center gap-3 mb-4">
-                            <div class="glass-dark rounded-2xl px-6 py-4 flex items-center gap-3">
-                                <span class="text-slate-200 text-sm" data-i18n="thinkingMsg">AI 正在思考中</span>
-                                <div class="flex gap-1">
-                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
-                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
-                                    <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce-dot"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
                     </div>
                     
                     <!-- 輸入區域 -->
@@ -606,10 +595,16 @@
                                     <div class="text-slate-400 text-xs" id="userStatus" data-i18n="loggedInStatus">已登入</div>
                                 </div>
                             </div>
-                            <button onclick="logoutUser()" 
-                                    class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-200 text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400" data-i18n="logoutBtn">
-                                登出
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="startNewChat()" 
+                                        class="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-400" data-i18n="newChatBtn">
+                                    🔄 新對話
+                                </button>
+                                <button onclick="logoutUser()" 
+                                        class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-slate-200 text-xs rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400" data-i18n="logoutBtn">
+                                    登出
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="flex gap-3 items-center">
@@ -653,13 +648,14 @@
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
-        const loadingElement = document.getElementById('loading');
         const welcomeSection = document.getElementById('welcomeSection');
         
         // 應用狀態
         let currentUser = null;
-        let currentSessionId = null;
+        let currentSessionId = localStorage.getItem('chatSessionId') || null;
         let isLoggedIn = false;
+        
+        console.log('頁面初始化，從 localStorage 讀取 sessionId:', currentSessionId);
 
         // 檢查是否輸入admin用戶名，顯示/隱藏密碼框
         function checkAdminUsername() {
@@ -804,8 +800,12 @@
             // 顯示用戶信息欄
             showUserInfo();
             
-            // 創建會話
-            createChatSession();
+            // 只有在沒有 sessionId 時才創建新會話
+            if (!currentSessionId) {
+                createChatSession();
+            } else {
+                console.log('使用現有會話:', currentSessionId);
+            }
         }
 
         function showUserInfo() {
@@ -859,6 +859,7 @@
                 
                 // 清除本地存儲
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('chatSessionId');
                 
                 // 隱藏用戶信息欄
                 hideUserInfo();
@@ -874,6 +875,65 @@
                     addMessage(msg);
                 }, 100);
             }
+        }
+
+        // 開始新對話
+        function startNewChat() {
+            const confirmMsg = langManager.getCurrentLanguage() === 'zh-TW' 
+                ? '確定要開始新對話嗎？當前對話記錄將被保存，但不會在頁面上顯示。' 
+                : 'Start a new conversation? Current chat will be saved but won\'t display on page.';
+            
+            if (confirm(confirmMsg)) {
+                // 清除當前會話 ID，下次發送訊息時會創建新的
+                currentSessionId = null;
+                localStorage.removeItem('chatSessionId');
+                
+                // 清除聊天區域
+                const messagesContainer = document.getElementById('messages');
+                messagesContainer.innerHTML = '';
+                
+                // 顯示範例問題（登入狀態下）
+                showExamplesOnly();
+                
+                const msg = langManager.getCurrentLanguage() === 'zh-TW'
+                    ? '已開始新對話！請輸入您的問題。'
+                    : 'New conversation started! Please enter your question.';
+                addMessage(msg);
+            }
+        }
+
+        // 僅顯示範例問題（用於新對話）
+        function showExamplesOnly() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = `
+                <div class="grid gap-3 max-w-2xl mx-auto animate-fadeInUp pt-4" id="exampleQuestions">
+                    <h3 class="text-slate-300 text-sm font-medium mb-2 flex items-center justify-center gap-2">
+                        <span class="animate-pulse-slow">💡</span> <span data-i18n="exampleTitle">點擊下方範例開始對話</span>
+                    </h3>
+                    
+                    <div class="grid gap-2 md:grid-cols-2">
+                        <button onclick="askExample(this.textContent)" 
+                                class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50" data-i18n="example1">
+                            什麼是標準差？如何計算？
+                        </button>
+                        <button onclick="askExample(this.textContent)" 
+                                class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50" data-i18n="example2">
+                            請解釋中央極限定理
+                        </button>
+                        <button onclick="askExample(this.textContent)" 
+                                class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50" data-i18n="example3">
+                            如何進行t檢定？
+                        </button>
+                        <button onclick="askExample(this.textContent)" 
+                                class="glass-dark rounded-xl p-4 text-slate-200 text-sm btn-hover text-left hover:bg-slate-700/50" data-i18n="example4">
+                            什麼時候使用卡方檢定？
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 翻譯新創建的元素
+            langManager.translatePage('chat');
         }
 
         function resetToInitialState() {
@@ -1194,16 +1254,19 @@
                 
                 if (data.success) {
                     currentSessionId = data.sessionId;
+                    localStorage.setItem('chatSessionId', currentSessionId);
                     console.log('會話創建成功:', currentSessionId);
                 } else {
                     console.error('創建會話失敗:', data.error);
                     // 如果會話創建失敗，使用本地生成的 ID
                     currentSessionId = newSessionId;
+                    localStorage.setItem('chatSessionId', currentSessionId);
                 }
             } catch (error) {
                 console.error('創建會話錯誤:', error);
                 // 如果網路錯誤，使用本地生成的 ID
                 currentSessionId = generateSessionId();
+                localStorage.setItem('chatSessionId', currentSessionId);
             }
         }
 
@@ -1214,6 +1277,85 @@
                     v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
+        }
+
+        // 載入聊天歷史記錄
+        async function loadChatHistory() {
+            if (!currentSessionId) {
+                console.log('沒有會話 ID，跳過載入歷史記錄');
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/history/${currentSessionId}?limit=50`);
+                const data = await response.json();
+
+                if (data.success && data.messages && data.messages.length > 0) {
+                    console.log(`載入了 ${data.messages.length} 條歷史記錄`);
+                    
+                    // 移除歡迎區域
+                    const welcomeSection = document.getElementById('welcomeSection');
+                    if (welcomeSection) {
+                        welcomeSection.remove();
+                    }
+
+                    // 顯示歷史訊息
+                    data.messages.forEach(msg => {
+                        addMessageFromHistory(msg.content, msg.sender_type === 'user');
+                    });
+
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('載入聊天歷史失敗:', error);
+                return false;
+            }
+        }
+
+        // 從歷史記錄添加訊息（不觸發 MathJax 多次重渲染）
+        function addMessageFromHistory(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${isUser ? 'flex justify-end' : 'flex justify-start'} message-bubble`;
+            
+            const bubbleClass = isUser 
+                ? 'bg-blue-600/90 text-white ml-auto' 
+                : 'glass-dark text-slate-200 mr-auto';
+            
+            let processedContent;
+            if (isUser) {
+                processedContent = `<div class="text-sm md:text-base leading-relaxed whitespace-pre-wrap">${escapeHtml(content)}</div>`;
+            } else {
+                let preprocessedContent = preprocessMath(content);
+                const markdownHtml = marked.parse(preprocessedContent);
+                processedContent = `<div class="text-sm md:text-base markdown-content tex2jax_process">${markdownHtml}</div>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-sm md:max-w-lg lg:max-w-xl xl:max-w-2xl rounded-2xl px-6 py-4 ${bubbleClass} shadow-sm">
+                    ${processedContent}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // 代碼高亮
+            if (!isUser && typeof hljs !== 'undefined') {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }
+
+        // 批量渲染 MathJax（在載入完歷史記錄後調用）
+        function renderAllMath() {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([messagesContainer]).then(() => {
+                    console.log('歷史記錄 MathJax 渲染完成');
+                }).catch((err) => {
+                    console.error('MathJax 渲染錯誤:', err);
+                });
+            }
         }
 
         function handleKeyPress(event) {
@@ -1254,7 +1396,7 @@
             }
             
             messageDiv.innerHTML = `
-                <div class="max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl px-6 py-4 ${bubbleClass} shadow-sm">
+                <div class="max-w-sm md:max-w-lg lg:max-w-xl xl:max-w-2xl rounded-2xl px-6 py-4 ${bubbleClass} shadow-sm">
                     ${processedContent}
                 </div>
             `;
@@ -1397,15 +1539,45 @@
             });
         }
 
+        // 動態載入動畫元素
+        let loadingDiv = null;
+
         function showLoading() {
-            loadingElement.classList.remove('hidden');
-            loadingElement.classList.add('flex');
+            // 如果已經有載入動畫，先移除
+            hideLoading();
+            
+            // 創建新的載入動畫元素
+            loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.className = 'flex items-center gap-3 mb-4';
+            
+            const thinkingText = langManager.getCurrentLanguage() === 'zh-TW' ? 'AI 正在思考中' : 'AI is thinking';
+            
+            loadingDiv.innerHTML = `
+                <div class="glass-dark rounded-2xl px-6 py-4 flex items-center gap-3">
+                    <span class="text-slate-200 text-sm">${thinkingText}</span>
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到訊息容器底部
+            messagesContainer.appendChild(loadingDiv);
+            
+            // 滾動到底部
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function hideLoading() {
-            loadingElement.classList.add('hidden');
-            loadingElement.classList.remove('flex');
+            // 移除載入動畫
+            const existingLoading = document.getElementById('loadingIndicator');
+            if (existingLoading) {
+                existingLoading.remove();
+            }
+            loadingDiv = null;
         }
 
         async function sendMessage() {
@@ -1461,6 +1633,7 @@
                     // 更新會話 ID（如果返回了新的）
                     if (data.sessionId) {
                         currentSessionId = data.sessionId;
+                        localStorage.setItem('chatSessionId', currentSessionId);
                     }
                 } else {
                     throw new Error(data.error || 'API回應錯誤');
@@ -1538,28 +1711,9 @@
         }
 
         // 頁面載入完成後初始化
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             // 初始化語言
             initLanguage();
-            
-            // 檢查是否有保存的用戶信息
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    isLoggedIn = true;
-                    showChatInterface();
-                    const welcomeMsg = langManager.getCurrentLanguage() === 'zh-TW' 
-                        ? `歡迎回來，${currentUser.username}！您的學習進度將繼續被追蹤。`
-                        : `Welcome back, ${currentUser.username}! Your progress will continue to be tracked.`;
-                    addMessage(welcomeMsg);
-                } catch (error) {
-                    console.error('解析保存的用戶信息失敗:', error);
-                    localStorage.removeItem('currentUser');
-                }
-            }
-            
-            messageInput.focus();
             
             // 配置 marked.js
             marked.setOptions({
@@ -1578,6 +1732,37 @@
             } else {
                 console.warn('Highlight.js 未載入，將跳過代碼高亮功能');
             }
+            
+            // 檢查是否有保存的用戶信息
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    isLoggedIn = true;
+                    showChatInterface();
+                    
+                    // 嘗試載入聊天歷史
+                    const hasHistory = await loadChatHistory();
+                    if (hasHistory) {
+                        // 批量渲染數學公式
+                        setTimeout(() => {
+                            renderAllMath();
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }, 500);
+                    } else {
+                        const welcomeMsg = langManager.getCurrentLanguage() === 'zh-TW' 
+                            ? `歡迎回來，${currentUser.username}！您的學習進度將繼續被追蹤。`
+                            : `Welcome back, ${currentUser.username}! Your progress will continue to be tracked.`;
+                        addMessage(welcomeMsg);
+                    }
+                } catch (error) {
+                    console.error('解析保存的用戶信息失敗:', error);
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('chatSessionId');
+                }
+            }
+            
+            messageInput.focus();
             
             // 等待 MathJax 載入完成
             setTimeout(() => {

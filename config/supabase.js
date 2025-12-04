@@ -115,6 +115,22 @@ class DatabaseService {
         }
     }
 
+    async getChatSession(sessionId) {
+        try {
+            const { data, error } = await this.client
+                .from('chat_sessions')
+                .select('*')
+                .eq('session_id', sessionId)
+                .single();
+            
+            if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+            return { success: true, data };
+        } catch (error) {
+            console.error('獲取會話失敗:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     async updateChatSession(sessionId, updateData) {
         try {
             const { data, error } = await this.client

@@ -115,9 +115,12 @@ router.post('/message', async (req, res) => {
         const { message, userId } = req.body;
         let sessionId = req.sessionId;
         
+        console.log('收到訊息請求，sessionId:', sessionId);
+        
         // 確保 sessionId 是有效的 UUID 格式
         if (!sessionId || !isValidUUID(sessionId)) {
             sessionId = generateUUID();
+            console.log('生成新的 sessionId:', sessionId);
             
             // 創建新會話
             const sessionData = {
@@ -128,6 +131,19 @@ router.post('/message', async (req, res) => {
             };
             
             await db.createChatSession(sessionData);
+        } else {
+            // 檢查會話是否存在，如果不存在則創建
+            const existingSession = await db.getChatSession(sessionId);
+            if (!existingSession.success || !existingSession.data) {
+                console.log('會話不存在，創建新會話:', sessionId);
+                const sessionData = {
+                    session_id: sessionId,
+                    user_id: userId || null,
+                    difficulty_level: 1,
+                    is_active: true
+                };
+                await db.createChatSession(sessionData);
+            }
         }
         
         if (!message || !message.trim()) {
@@ -148,18 +164,38 @@ router.post('/message', async (req, res) => {
             concept_tags: concepts
         };
         
-        await db.saveMessage(userMessageData);
+        const saveResult = await db.saveMessage(userMessageData);
+        console.log('保存用戶訊息結果:', saveResult.success);
         
-        // Call FastGPT API
+        // 獲取對話歷史（最近 20 條訊息）
+        const historyResult = await db.getSessionMessages(sessionId, 20);
+        let chatMessages = [];
+        
+        console.log('獲取歷史記錄結果:', historyResult.success, '訊息數量:', historyResult.data?.length || 0);
+        
+        if (historyResult.success && historyResult.data && historyResult.data.length > 0) {
+            // 將歷史訊息轉換為 FastGPT 格式（排除剛剛保存的當前訊息）
+            const historyMessages = historyResult.data.slice(0, -1); // 排除最後一條（剛保存的用戶訊息）
+            chatMessages = historyMessages.map(msg => ({
+                role: msg.sender_type === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }));
+            console.log('包含歷史訊息數量:', chatMessages.length);
+        }
+        
+        // 添加當前用戶訊息
+        chatMessages.push({
+            role: 'user',
+            content: message
+        });
+        
+        console.log('發送給 FastGPT 的訊息數量:', chatMessages.length);
+        
+        // Call FastGPT API with conversation history
         // Note: Prompts are configured in FastGPT platform to avoid conflicts
         // Model is not specified, allowing FastGPT to use platform default
         const response = await axios.post(`${FASTGPT_API_BASE_URL}/v1/chat/completions`, {
-            messages: [
-                {
-                    role: 'user',
-                    content: message
-                }
-            ]
+            messages: chatMessages
         }, {
             headers: {
                 'Content-Type': 'application/json',
