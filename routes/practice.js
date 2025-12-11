@@ -116,7 +116,12 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         
         if (questionType === 'multiple_choice') {
             correctAnswerExample = 'A';
-            additionalInstructions = '**CRITICAL: For multiple choice questions, "correct_answer" must be ONLY a single letter (A, B, C, or D), NOT the full option text.**';
+            additionalInstructions = `**CRITICAL for Multiple Choice:
+- "correct_answer" must be ONLY a single letter (A, B, C, or D), NOT the full option text.
+- "options" array must contain 4 items, each is the option TEXT ONLY without letter prefix.
+- DO NOT include "A.", "B.", "C.", "D." at the beginning of each option.
+- Example of correct options format: ["The mean is 50", "The mean is 60", "The mean is 70", "The mean is 80"]
+- Example of WRONG options format: ["A. The mean is 50", "B. The mean is 60", ...] - DO NOT DO THIS**`;
         } else if (questionType === 'calculation') {
             correctAnswerExample = 'The answer is 2.45. Step 1: Calculate the mean... Step 2: Apply the formula...';
             additionalInstructions = '**For calculation questions, provide the numerical answer AND the step-by-step solution process.**';
@@ -129,19 +134,23 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         }
 
         // 構建生成題目的提示詞 (English version for English-speaking users)
-        const prompt = `You are a statistics question generator. Based on your knowledge base, generate a ${getDifficultyName(difficulty)} difficulty ${getQuestionTypeName(questionType)} question for the concept "${concept}".
+        const prompt = `You are a statistics question generator for psychology students. Generate a ${getDifficultyName(difficulty)} difficulty ${getQuestionTypeName(questionType)} question for the concept "${concept}".
+
+**CRITICAL - DIFFICULTY LEVEL REQUIREMENTS:**
+${getDifficultyDescription(difficulty)}
 
 **IMPORTANT REQUIREMENTS:**
 1. Return ONLY JSON format, no other text or explanation.
 2. The "correct_answer" field is REQUIRED for ALL question types.
 3. The "explanation" field is REQUIRED for ALL question types.
+4. **STRICTLY FOLLOW the difficulty level requirements above.**
 
 JSON format:
 \`\`\`json
 {
-    "question_text": "Question content (must include psychology context)",
+    "question_text": "Question content (must include psychology research context and follow difficulty requirements)",
     "question_type": "${questionType}",
-    "options": ${questionType === 'multiple_choice' ? '["A. Option A", "B. Option B", "C. Option C", "D. Option D"]' : 'null'},
+    "options": ${questionType === 'multiple_choice' ? '["Option A text without letter prefix", "Option B text without letter prefix", "Option C text without letter prefix", "Option D text without letter prefix"]' : 'null'},
     "correct_answer": "${correctAnswerExample}",
     "explanation": "Detailed explanation of why this is the correct answer and the key concepts involved",
     "difficulty_level": ${DIFFICULTY_LEVELS[difficulty]},
@@ -151,9 +160,10 @@ JSON format:
 
 ${additionalInstructions}
 
-Difficulty description: ${getDifficultyDescription(difficulty)}
-
-**REMEMBER: "correct_answer" and "explanation" are MANDATORY fields. Generate the question now, return ONLY JSON.**`;
+**REMEMBER: 
+- "correct_answer" and "explanation" are MANDATORY fields.
+- Follow the DIFFICULTY LEVEL requirements strictly.
+- Generate the question now, return ONLY JSON.**`;
 
 
         const response = await axios.post(`${FASTGPT_API_BASE_URL}/v1/chat/completions`, {
@@ -302,9 +312,26 @@ function getQuestionTypeName(questionType) {
  */
 function getDifficultyDescription(difficulty) {
     const descriptions = {
-        basic: 'Basic concept understanding, suitable for beginners',
-        medium: 'Concept application and analysis, requires some understanding',
-        advanced: 'In-depth analysis and critical thinking, requires mastery of knowledge'
+        basic: `BASIC Level Requirements:
+- All necessary numbers and statistics are ALREADY PROVIDED in the question
+- Student only needs to identify, interpret, or apply given values
+- No calculations from raw data required
+- Example: Given mean=50, SD=10, what is the z-score for X=60?`,
+        
+        medium: `INTERMEDIATE Level Requirements:
+- Provide RAW DATA that students must use to calculate statistics
+- Students need to compute mean, SD, t-value, correlation, etc. from the data
+- Require answers to be reported in APA format, for example: t(29) = 2.45, p < .05
+- Include realistic dataset sizes, around 10-30 data points
+- Example: Given these scores: 12, 15, 18, 14, 16, 20, 13, 17, 19, 15, calculate the mean and standard deviation, then perform a one-sample t-test against population mean of 15. Report in APA format.`,
+        
+        advanced: `ADVANCED Level Requirements:
+- Include all requirements from intermediate level
+- MUST require critical discussion, evaluation, or ethical considerations
+- Ask students to discuss limitations, assumptions, real-world implications
+- Include questions about Type I or Type II errors, effect size interpretation, or study design critique
+- May involve ethical issues in data collection or interpretation
+- Example: Analyze this dataset, report results in APA format, AND discuss the ethical implications of using this statistical test with this sample. What are the limitations?`
     };
     return descriptions[difficulty] || descriptions.basic;
 }

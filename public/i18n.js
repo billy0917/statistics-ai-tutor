@@ -20,7 +20,8 @@ const i18n = {
             error: '錯誤',
             success: '成功',
             warning: '警告',
-            info: '提示'
+            info: '提示',
+            disclaimer: '⚠️ 免責聲明：本系統使用 AI 技術生成內容，答案未必完全正確，請謹慎判斷並以教材及老師教學內容為準。'
         },
 
         // 主聊天頁面
@@ -258,7 +259,8 @@ const i18n = {
             error: 'Error',
             success: 'Success',
             warning: 'Warning',
-            info: 'Info'
+            info: 'Info',
+            disclaimer: '⚠️ Disclaimer: This system uses AI technology to generate content. Answers may not be entirely accurate. Please use your judgment and refer to your course materials and instructor\'s guidance.'
         },
 
         // Main Chat Page
@@ -532,7 +534,15 @@ class LanguageManager {
     translatePage(section) {
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
-            this.translateElement(element, key, section);
+            // 處理包含點號的 key（如 common.disclaimer）
+            if (key.includes('.')) {
+                const parts = key.split('.');
+                const targetSection = parts[0];
+                const targetKey = parts.slice(1).join('.');
+                this.translateElement(element, targetKey, targetSection);
+            } else {
+                this.translateElement(element, key, section);
+            }
         });
     }
 }
