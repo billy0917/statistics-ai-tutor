@@ -830,16 +830,35 @@
 
         async function fileToCompressedDataURL(file) {
             const dataUrl = await readFileAsDataURL(file);
+            
+            // 如果原圖檔案小於 500KB，直接使用原圖（保留最高品質）
+            if (file.size < 500 * 1024) {
+                return dataUrl;
+            }
+            
             const img = await loadImage(dataUrl);
+            const originalW = img.naturalWidth;
+            const originalH = img.naturalHeight;
 
+            // 只有當圖片超過 1920×1080 時才縮小
             const maxW = 1920;
             const maxH = 1080;
-            let targetW = img.naturalWidth;
-            let targetH = img.naturalHeight;
+            const needsResize = originalW > maxW || originalH > maxH;
+            
+            if (!needsResize) {
+                // 圖片尺寸合理，只轉 JPEG 格式壓縮（保持原尺寸）
+                const canvas = document.createElement('canvas');
+                canvas.width = originalW;
+                canvas.height = originalH;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                return canvas.toDataURL('image/jpeg', 0.9);
+            }
 
-            const scale = Math.min(1, maxW / targetW, maxH / targetH);
-            targetW = Math.max(1, Math.round(targetW * scale));
-            targetH = Math.max(1, Math.round(targetH * scale));
+            // 需要縮小：按比例縮至 1920×1080 內
+            const scale = Math.min(maxW / originalW, maxH / originalH);
+            const targetW = Math.max(1, Math.round(originalW * scale));
+            const targetH = Math.max(1, Math.round(originalH * scale));
 
             const canvas = document.createElement('canvas');
             canvas.width = targetW;
@@ -865,6 +884,17 @@
 
                 try {
                     const compressed = await fileToCompressedDataURL(file);
+                    
+                    // 檢查壓縮後大小（localStorage 限制約 5-10MB，保守限制 2MB）
+                    const sizeInMB = (compressed.length * 0.75) / (1024 * 1024); // Base64 約為原始 4/3
+                    if (sizeInMB > 2) {
+                        const msg = (typeof langManager !== 'undefined' && langManager.getCurrentLanguage() === 'zh-TW')
+                            ? `圖片太大（${sizeInMB.toFixed(1)}MB），請選擇較小的圖片（建議 < 2MB）`
+                            : `Image too large (${sizeInMB.toFixed(1)}MB). Please choose a smaller image (< 2MB recommended)`;
+                        alert(msg);
+                        return;
+                    }
+                    
                     localStorage.setItem(BG_STORAGE_KEY, compressed);
                     document.body.style.backgroundImage = `url('${compressed}')`;
                 } catch (e) {
