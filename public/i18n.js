@@ -21,7 +21,8 @@ const i18n = {
             success: '成功',
             warning: '警告',
             info: '提示',
-            disclaimer: '⚠️ 免責聲明：本系統使用 AI 技術生成內容，答案未必完全正確，請謹慎判斷並以教材及老師教學內容為準。'
+            disclaimer: '⚠️ 免責聲明：本系統使用 AI 技術生成內容，答案未必完全正確，請謹慎判斷並以教材及老師教學內容為準。',
+            setBackground: '🖼️ 更換背景'
         },
 
         // 主聊天頁面
@@ -260,7 +261,8 @@ const i18n = {
             success: 'Success',
             warning: 'Warning',
             info: 'Info',
-            disclaimer: '⚠️ Disclaimer: This system uses AI technology to generate content. Answers may not be entirely accurate. Please use your judgment and refer to your course materials and instructor\'s guidance.'
+            disclaimer: '⚠️ Disclaimer: This system uses AI technology to generate content. Answers may not be entirely accurate. Please use your judgment and refer to your course materials and instructor\'s guidance.',
+            setBackground: '🖼️ Change Background'
         },
 
         // Main Chat Page

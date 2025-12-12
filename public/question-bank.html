@@ -192,6 +192,10 @@
                         <span id="langIcon">🌐</span>
                         <span id="langText">中文</span>
                     </button>
+                    <button id="bgBtn" class="glass-dark px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-700/50 transition-all text-sm font-medium flex items-center gap-2" data-i18n="common.setBackground">
+                        🖼️ 更換背景
+                    </button>
+                    <input id="bgInput" type="file" accept="image/*" class="hidden" />
                     <span class="text-slate-500">|</span>
                     <a href="/practice.html" class="text-blue-400 hover:text-blue-300 transition" data-i18n="aiPractice">
                         AI 生成練習
@@ -951,8 +955,86 @@
             }
         }
 
+        // ============ Custom Background (Local) ============
+        const BG_STORAGE_KEY = 'customBackgroundImage';
+
+        function applyCustomBackgroundFromStorage() {
+            const stored = localStorage.getItem(BG_STORAGE_KEY);
+            if (stored) {
+                document.body.style.backgroundImage = `url('${stored}')`;
+            }
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = src;
+            });
+        }
+
+        async function fileToCompressedDataURL(file) {
+            const dataUrl = await readFileAsDataURL(file);
+            const img = await loadImage(dataUrl);
+
+            const maxW = 1920;
+            const maxH = 1080;
+            let targetW = img.naturalWidth;
+            let targetH = img.naturalHeight;
+
+            const scale = Math.min(1, maxW / targetW, maxH / targetH);
+            targetW = Math.max(1, Math.round(targetW * scale));
+            targetH = Math.max(1, Math.round(targetH * scale));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+
+            return canvas.toDataURL('image/jpeg', 0.85);
+        }
+
+        function initBackgroundPicker() {
+            applyCustomBackgroundFromStorage();
+
+            const btn = document.getElementById('bgBtn');
+            const input = document.getElementById('bgInput');
+            if (!btn || !input) return;
+
+            btn.addEventListener('click', () => input.click());
+            input.addEventListener('change', async () => {
+                const file = input.files && input.files[0];
+                input.value = '';
+                if (!file) return;
+
+                try {
+                    const compressed = await fileToCompressedDataURL(file);
+                    localStorage.setItem(BG_STORAGE_KEY, compressed);
+                    document.body.style.backgroundImage = `url('${compressed}')`;
+                } catch (e) {
+                    console.error('Set background failed:', e);
+                    const msg = (typeof langManager !== 'undefined' && langManager.getCurrentLanguage() === 'zh-TW')
+                        ? '設定背景失敗，請換一張圖片再試。'
+                        : 'Failed to set background. Please try another image.';
+                    alert(msg);
+                }
+            });
+        }
+
         // 初始化應用
         initLanguage();
+        initBackgroundPicker();
         init();
     </script>
 </body>
