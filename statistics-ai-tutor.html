@@ -635,8 +635,10 @@
                                     alt="發送"
                                     data-i18n-alt="sendBtn"
                                     class="send-btn focus:outline-none">
-                                <i>發</i>
-                                <i>送</i>
+                                <i>S</i>
+                                <i>E</i>
+                                <i>N</i>
+                                <i>D</i>
                             </button>
                         </div>
                     </div>
@@ -1799,6 +1801,17 @@
             const currentLang = langManager.getCurrentLanguage();
             updateLangButton(currentLang);
             langManager.translatePage('chat');
+            
+            // 初始化 placeholder 和 send button
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = langManager.t(key, 'chat');
+            });
+            const sendBtn = document.querySelector('[data-i18n-alt]');
+            if (sendBtn) {
+                const key = sendBtn.getAttribute('data-i18n-alt');
+                sendBtn.setAttribute('alt', langManager.t(key, 'chat'));
+            }
             
             // 語言切換按鈕事件
             document.getElementById('langToggle').addEventListener('click', () => {
