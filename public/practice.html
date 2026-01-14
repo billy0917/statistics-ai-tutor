@@ -328,6 +328,7 @@
                         <select id="conceptSelect" class="w-full px-4 py-2 bg-slate-700/50 border border-slate-600/60 rounded-lg text-slate-100 focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                             <option value="" data-i18n="conceptPlaceholder">Select concept...</option>
                             <option value="Descriptive Statistics">Descriptive Statistics</option>
+                            <option value="Sample Size">Sample Size</option>
                             <option value="One-Sample t-Test">One-Sample t-Test</option>
                             <option value="Independent Samples t-Test">Independent Samples t-Test</option>
                             <option value="Paired Samples t-Test">Paired Samples t-Test</option>
@@ -1204,6 +1205,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             questionId: currentQuestion.question_id,
+                            // 若題目未成功寫入資料庫（缺少 question_id），改送出完整題目資料讓後端直接評分
+                            question: currentQuestion.question_id ? null : currentQuestion,
                             userAnswer,
                             timeTaken,
                             userId: currentUser?.user_id || null,

@@ -12,6 +12,7 @@ const FASTGPT_API_BASE_URL = process.env.FASTGPT_API_BASE_URL;
 const STATISTICAL_CONCEPTS = [
     'Descriptive Statistics',
     'Standard Deviation',
+    'Sample Size',
     'One-Sample t-Test',
     'Independent Samples t-Test',
     'Paired Samples t-Test',
@@ -25,6 +26,9 @@ const CONCEPT_NAME_MAP = {
     // 英文變體映射
     'descriptive statistics': 'Descriptive Statistics',
     'standard deviation': 'Standard Deviation',
+    'sample size': 'Sample Size',
+    'sample size determination': 'Sample Size',
+    'sample size calculation': 'Sample Size',
     'one sample t test': 'One-Sample t-Test',
     'one-sample t test': 'One-Sample t-Test',
     'one-sample t-test': 'One-Sample t-Test',
@@ -47,6 +51,14 @@ const CONCEPT_NAME_MAP = {
     '描述统计': 'Descriptive Statistics',
     '標準差': 'Standard Deviation',
     '标准差': 'Standard Deviation',
+    '樣本大小': 'Sample Size',
+    '样本大小': 'Sample Size',
+    '樣本數': 'Sample Size',
+    '样本数': 'Sample Size',
+    '樣本量': 'Sample Size',
+    '样本量': 'Sample Size',
+    '樣本大小估計': 'Sample Size',
+    '样本大小估计': 'Sample Size',
     '單樣本t檢定': 'One-Sample t-Test',
     '单样本t检定': 'One-Sample t-Test',
     '獨立樣本t檢定': 'Independent Samples t-Test',
@@ -101,6 +113,61 @@ const QUESTION_TYPES = {
     interpretation: 'Interpretation'
 };
 
+function getConceptMetadata(conceptName) {
+    switch (conceptName) {
+        case 'Sample Size':
+            return {
+                category: 'study_design',
+                difficulty_level: 2,
+                description: 'Sample size determination based on significance level (alpha) and desired precision (margin of error).',
+                prerequisites: []
+            };
+        default:
+            return {
+                category: 'general',
+                difficulty_level: 1,
+                description: null,
+                prerequisites: []
+            };
+    }
+}
+
+async function ensureConceptExistsInSupabase(conceptName) {
+    if (!conceptName) return;
+
+    // If admin client is not configured, we cannot safely upsert concepts when RLS is enabled.
+    if (!db.admin) {
+        return;
+    }
+
+    try {
+        const meta = getConceptMetadata(conceptName);
+        const { error } = await db.admin
+            .from('statistical_concepts')
+            .upsert([
+                {
+                    concept_name: conceptName,
+                    category: meta.category,
+                    difficulty_level: meta.difficulty_level,
+                    description: meta.description,
+                    prerequisites: meta.prerequisites
+                }
+            ], { onConflict: 'concept_name' });
+
+        if (error) {
+            console.error('❌ Upsert concept failed:', {
+                conceptName,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+        }
+    } catch (e) {
+        console.error('❌ Upsert concept threw:', e);
+    }
+}
+
 /**
  * 使用 FastGPT 生成練習題
  * @param {string} concept - 統計概念
@@ -113,6 +180,7 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         // 根據題型構建不同的範例
         let correctAnswerExample;
         let additionalInstructions = '';
+        let conceptSpecificInstructions = '';
         
         if (questionType === 'multiple_choice') {
             correctAnswerExample = 'A';
@@ -131,6 +199,35 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         } else {
             correctAnswerExample = 'A complete interpretation should include: 1) The statistical meaning... 2) The practical implications... 3) Limitations...';
             additionalInstructions = '**For interpretation questions, provide a detailed model answer covering all key points.**';
+        }
+
+        // 概念特定要求：樣本大小 (Sample Size)
+        if (concept === 'Sample Size') {
+            conceptSpecificInstructions = `
+**SAMPLE SIZE QUESTION REQUIREMENTS (Concept: "Sample Size")**
+- The question MUST ask the student to compute the MINIMUM required sample size n.
+- The question MUST provide a significance level \u03b1 (two-sided) OR confidence level (1-\u03b1), AND a desired precision E (margin of error).
+- The question MUST also provide any additional parameter(s) needed for a solvable sample size calculation:
+  - For estimating a population mean: provide population SD \u03c3 (assume known), use $n = (z_{1-\u03b1/2} \u03c3 / E)^2$.
+  - For estimating a proportion: provide expected p OR explicitly state to use conservative p=0.5, use $n = z_{1-\u03b1/2}^2\,p(1-p)/E^2$.
+- The final answer MUST be an integer and MUST round up using the ceiling rule.
+- Keep the context in psychology research (e.g., estimating mean anxiety score, proportion with a symptom).
+`;
+
+            if (questionType === 'multiple_choice') {
+                conceptSpecificInstructions += `
+**For Multiple Choice (Sample Size):**
+- Provide 4 plausible integer sample sizes as options.
+- The correct option must correspond to the CEILING of the computed n.
+`;
+            }
+
+            if (questionType === 'calculation') {
+                conceptSpecificInstructions += `
+**For Calculation (Sample Size):**
+- Show the z critical value used (e.g., 1.96 for \u03b1=0.05 two-sided) and show the rounding-up step.
+`;
+            }
         }
 
         // 構建生成題目的提示詞 (English version for English-speaking users)
@@ -159,6 +256,8 @@ JSON format:
 \`\`\`
 
 ${additionalInstructions}
+
+${conceptSpecificInstructions}
 
 **REMEMBER: 
 - "correct_answer" and "explanation" are MANDATORY fields.
@@ -378,6 +477,9 @@ router.post('/generate', async (req, res) => {
         // 保存到資料庫
         let savedQuestion = null;
         if (saveToDatabase) {
+            // Ensure FK target exists (practice_questions.concept_name may reference statistical_concepts.concept_name)
+            await ensureConceptExistsInSupabase(normalizedConceptName);
+
             const dbData = {
                 concept_name: normalizedConceptName,  // 使用標準化的中文名稱
                 question_text: questionData.question_text,
@@ -388,14 +490,25 @@ router.post('/generate', async (req, res) => {
                 difficulty_level: questionData.difficulty_level
             };
 
-            const result = await db.client
+            // Use admin client when available (bypass RLS / permission issues)
+            const writeClient = db.admin || db.client;
+            if (!db.admin) {
+                console.warn('⚠️ SUPABASE_SERVICE_KEY not configured; saving questions may fail if RLS is enabled.');
+            }
+
+            const result = await writeClient
                 .from('practice_questions')
                 .insert([dbData])
                 .select()
                 .single();
 
             if (result.error) {
-                console.error('❌ 保存題目失敗:', result.error);
+                console.error('❌ 保存題目失敗:', {
+                    message: result.error.message,
+                    details: result.error.details,
+                    hint: result.error.hint,
+                    code: result.error.code
+                });
             } else {
                 console.log('✅ 題目已保存到資料庫');
                 savedQuestion = result.data;
@@ -406,7 +519,8 @@ router.post('/generate', async (req, res) => {
             success: true,
             question: savedQuestion || questionData,
             generated: true,
-            message: '題目生成成功'
+            message: '題目生成成功',
+            savedToDatabase: Boolean(savedQuestion)
         });
 
     } catch (error) {
@@ -512,30 +626,45 @@ router.post('/submit', async (req, res) => {
     try {
         const {
             questionId,
+            question,
             userId,
             sessionId,
             userAnswer,
             timeTaken = 0
         } = req.body;
 
-        if (!questionId || !userAnswer) {
+        if (!userAnswer || (!questionId && !question)) {
             return res.status(400).json({
                 success: false,
                 error: '缺少必要參數'
             });
         }
 
-        // 獲取題目
-        const { data: question, error: questionError } = await db.client
-            .from('practice_questions')
-            .select('*')
-            .eq('question_id', questionId)
-            .single();
+        // 獲取題目：優先使用 questionId 從資料庫抓取；否則使用前端提供的題目物件
+        let resolvedQuestion = null;
+        if (questionId) {
+            const { data: dbQuestion, error: questionError } = await db.client
+                .from('practice_questions')
+                .select('*')
+                .eq('question_id', questionId)
+                .single();
 
-        if (questionError || !question) {
-            return res.status(404).json({
+            if (questionError || !dbQuestion) {
+                return res.status(404).json({
+                    success: false,
+                    error: '題目不存在'
+                });
+            }
+            resolvedQuestion = dbQuestion;
+        } else {
+            resolvedQuestion = question;
+        }
+
+        // 基本欄位檢查（當使用前端題目物件時）
+        if (!resolvedQuestion || !resolvedQuestion.question_text || !resolvedQuestion.question_type) {
+            return res.status(400).json({
                 success: false,
-                error: '題目不存在'
+                error: '題目資料不完整'
             });
         }
 
@@ -546,41 +675,46 @@ router.post('/submit', async (req, res) => {
         // 根據題型選擇評分方式
         const openEndedTypes = ['case_study', 'calculation', 'interpretation', 'short_answer'];
         
-        if (openEndedTypes.includes(question.question_type)) {
+        if (openEndedTypes.includes(resolvedQuestion.question_type)) {
             // 開放式題型：使用 AI 評分
-            console.log('📝 使用 AI 評分，題型:', question.question_type);
-            aiEvaluation = await evaluateAnswerWithAI(question, userAnswer);
+            console.log('📝 使用 AI 評分，題型:', resolvedQuestion.question_type);
+            aiEvaluation = await evaluateAnswerWithAI(resolvedQuestion, userAnswer);
             isCorrect = aiEvaluation.isCorrect;
             score = aiEvaluation.score;
         } else {
             // 選擇題：使用固定答案比對
-            isCorrect = checkAnswer(userAnswer, question.correct_answer, question.question_type);
+            isCorrect = checkAnswer(userAnswer, resolvedQuestion.correct_answer, resolvedQuestion.question_type);
             score = isCorrect ? 100 : 0;
         }
 
-        // 保存答題記錄（不包含 score 欄位，避免資料庫錯誤）
-        const answerData = {
-            user_id: userId || null,
-            question_id: questionId,
-            session_id: sessionId || null,
-            user_answer: userAnswer,
-            is_correct: isCorrect,
-            time_taken: timeTaken
-        };
+        // 保存答題記錄：只有在有 questionId 時才能建立 FK 關聯
+        let answerRecord = null;
+        if (questionId) {
+            const answerData = {
+                user_id: userId || null,
+                question_id: questionId,
+                session_id: sessionId || null,
+                user_answer: userAnswer,
+                is_correct: isCorrect,
+                time_taken: timeTaken
+            };
 
-        const { data: answerRecord, error: saveError } = await db.client
-            .from('user_answers')
-            .insert([answerData])
-            .select()
-            .single();
+            const { data: savedAnswer, error: saveError } = await db.client
+                .from('user_answers')
+                .insert([answerData])
+                .select()
+                .single();
 
-        if (saveError) {
-            console.error('保存答題記錄失敗:', saveError);
+            if (saveError) {
+                console.error('保存答題記錄失敗:', saveError);
+            } else {
+                answerRecord = savedAnswer;
+            }
         }
 
         // 更新學習進度
-        if (userId && question.concept_name) {
-            await updateLearningProgress(userId, question.concept_name, isCorrect);
+        if (userId && resolvedQuestion.concept_name) {
+            await updateLearningProgress(userId, resolvedQuestion.concept_name, isCorrect);
         }
 
         // 構建回應
@@ -588,11 +722,11 @@ router.post('/submit', async (req, res) => {
             success: true,
             isCorrect,
             score,
-            correctAnswer: question.correct_answer,
-            explanation: question.explanation,
+            correctAnswer: resolvedQuestion.correct_answer,
+            explanation: resolvedQuestion.explanation,
             answerRecord: answerRecord,
-            feedback: aiEvaluation?.feedback || generateFeedback(isCorrect, question.difficulty_level),
-            questionType: question.question_type
+            feedback: aiEvaluation?.feedback || generateFeedback(isCorrect, resolvedQuestion.difficulty_level),
+            questionType: resolvedQuestion.question_type
         };
 
         // 如果是 AI 評分，添加額外資訊

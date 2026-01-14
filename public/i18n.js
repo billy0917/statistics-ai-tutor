@@ -317,6 +317,7 @@ const i18n = {
             conceptPlaceholder: 'Select concept...',
             conceptDescriptive: 'Descriptive Statistics',
             conceptStdDev: 'Standard Deviation',
+            conceptSampleSize: 'Sample Size',
             conceptOneSampleT: 'One-Sample t-Test',
             conceptIndependentT: 'Independent t-Test',
             conceptPairedT: 'Paired t-Test',
