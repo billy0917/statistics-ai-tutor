@@ -181,6 +181,7 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         let correctAnswerExample;
         let additionalInstructions = '';
         let conceptSpecificInstructions = '';
+        let sampleSizeJsonSchema = '';
         
         if (questionType === 'multiple_choice') {
             correctAnswerExample = 'A';
@@ -214,11 +215,25 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
 - Keep the context in psychology research (e.g., estimating mean anxiety score, proportion with a symptom).
 `;
 
+                        sampleSizeJsonSchema = `,
+        "sample_size_parameters": {
+                "type": "mean_or_proportion", // MUST be either "mean" or "proportion"
+                "alpha": 0.05,                 // two-sided alpha OR
+                "confidence_level": 0.95,       // 1 - alpha (provide one of alpha/confidence_level)
+                "E": 2,                         // margin of error
+                "sigma": 8,                     // required if type = "mean"
+                "p": 0.5,                       // required if type = "proportion" (use 0.5 if conservative)
+                "z": 1.96                       // z critical value used
+        }`;
+
             if (questionType === 'multiple_choice') {
                 conceptSpecificInstructions += `
 **For Multiple Choice (Sample Size):**
 - Provide 4 plausible integer sample sizes as options.
-- The correct option must correspond to the CEILING of the computed n.
+- The correct option MUST correspond to the CEILING of the computed n.
+- The exact computed ceiling value MUST appear in the options (no "closest" answers).
+- Do NOT say "none of the options" or "closest" in the explanation.
+- The explanation MUST explicitly state the computed n and which option matches it.
 `;
             }
 
@@ -251,7 +266,7 @@ JSON format:
     "correct_answer": "${correctAnswerExample}",
     "explanation": "Detailed explanation of why this is the correct answer and the key concepts involved",
     "difficulty_level": ${DIFFICULTY_LEVELS[difficulty]},
-    "concept_name": "${concept}"
+    "concept_name": "${concept}"${sampleSizeJsonSchema}
 }
 \`\`\`
 
@@ -280,7 +295,7 @@ ${conceptSpecificInstructions}
         });
 
         const data = response.data;
-        
+
         // 檢查回應結構
         if (!data.choices || !data.choices[0] || !data.choices[0].message) {
             console.error('FastGPT 回應格式錯誤:', JSON.stringify(data, null, 2));
@@ -362,6 +377,63 @@ ${conceptSpecificInstructions}
                 if (answerMatch) {
                     questionData.correct_answer = answerMatch[1].toUpperCase();
                     console.log(`📌 清理答案格式: "${originalAnswer}" → "${questionData.correct_answer}"`);
+                }
+            }
+
+            // Sample Size MC: enforce correct option by computing from structured parameters
+            if (questionData.concept_name === 'Sample Size' && questionData.question_type === 'multiple_choice') {
+                const params = questionData.sample_size_parameters || {};
+                const type = params.type;
+                const alpha = typeof params.alpha === 'number' ? params.alpha : null;
+                const confidence = typeof params.confidence_level === 'number' ? params.confidence_level : null;
+                const E = typeof params.E === 'number' ? params.E : null;
+                const sigma = typeof params.sigma === 'number' ? params.sigma : null;
+                const p = typeof params.p === 'number' ? params.p : null;
+                const z = typeof params.z === 'number' ? params.z : null;
+
+                const hasNeeded = type && E && z && ((type === 'mean' && sigma) || (type === 'proportion' && (p !== null && p !== undefined)));
+
+                if (hasNeeded) {
+                    let nRaw;
+                    if (type === 'mean') {
+                        nRaw = Math.pow((z * sigma) / E, 2);
+                    } else {
+                        nRaw = (Math.pow(z, 2) * p * (1 - p)) / Math.pow(E, 2);
+                    }
+
+                    const nCeil = Math.ceil(nRaw);
+                    const nFloor = Math.floor(nRaw);
+                    const nRound = Math.round(nRaw);
+                    const nAlt = Math.max(1, Math.ceil(Math.pow((1.64 * (sigma || Math.sqrt(p * (1 - p)))) / E, 2)));
+
+                    const pool = [nCeil, nFloor, nRound, nAlt, Math.max(1, nCeil - 1), nCeil + 1, nCeil + 2]
+                        .filter(n => Number.isFinite(n) && n > 0)
+                        .map(n => Math.round(n));
+
+                    const unique = [...new Set(pool)];
+                    if (!unique.includes(nCeil)) {
+                        unique.unshift(nCeil);
+                    }
+
+                    const options = unique.slice(0, 4);
+                    while (options.length < 4) {
+                        options.push(options[options.length - 1] + 1);
+                    }
+
+                    questionData.options = options.map(n => n.toString());
+                    const correctIndex = options.indexOf(nCeil);
+                    questionData.correct_answer = String.fromCharCode(65 + correctIndex);
+
+                    console.log('✅ Sample Size MC options rebuilt with correct ceiling n:', {
+                        nRaw,
+                        nCeil,
+                        options: questionData.options,
+                        correct_answer: questionData.correct_answer
+                    });
+                } else {
+                    console.warn('⚠️ Sample Size parameters missing; cannot enforce MC options.', {
+                        type, alpha, confidence, E, sigma, p, z
+                    });
                 }
             }
             
