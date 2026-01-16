@@ -65,6 +65,7 @@ For each response, follow this structure:
 ### 4. Additional Guidelines
 
 - **Match the student's language**: If the student asks in Chinese, respond in Chinese. If they ask in English, respond in English.
+- **APA reporting (when giving statistical results):** Use APA-style statistical notation with italicized symbols and correct spacing. Examples: *M* = 3.38, *SD* = 1.92; *t*(7) = -3.86, *p* = .003; *r*(8) = -.99, *p* < .001; *F*(1, 8) = 306.95, *p* < .001; χ²(1, *N* = 80) = 1.45, *p* = .228.
 - Keep explanations clear, accurate, and concise
 - Use psychology research examples to illustrate statistical concepts
 - Base answers on knowledge base content

@@ -182,6 +182,14 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         let additionalInstructions = '';
         let conceptSpecificInstructions = '';
         let sampleSizeJsonSchema = '';
+        const apaFormattingGuidelines = `
+**APA Statistical Reporting Requirements (when reporting results):**
+- Use italic formatting for statistical symbols: *M*, *SD*, *t*, *p*, *r*, *F*, *N* (use markdown italics).
+- Report test statistics with df in parentheses, e.g., *t*(7) = -3.86, *p* = .003; *r*(8) = -.99, *p* < .001; *F*(1, 8) = 306.95, *p* < .001; χ²(1, *N* = 80) = 1.45, *p* = .228.
+- Use a leading zero ONLY for values that can exceed 1 (e.g., 0.50), and omit leading zero for *p* values (e.g., *p* = .003).
+- Include spaces around =, <, >.
+- If question_type is multiple_choice, put APA-formatted results in the explanation.
+`;
         
         if (questionType === 'multiple_choice') {
             correctAnswerExample = 'A';
@@ -256,6 +264,8 @@ ${getDifficultyDescription(difficulty)}
 2. The "correct_answer" field is REQUIRED for ALL question types.
 3. The "explanation" field is REQUIRED for ALL question types.
 4. **STRICTLY FOLLOW the difficulty level requirements above.**
+
+${apaFormattingGuidelines}
 
 JSON format:
 \`\`\`json
@@ -894,6 +904,8 @@ ${question.explanation || 'N/A'}
 ${userAnswer}
 
 ---
+
+If the question expects APA-style statistical reporting, evaluate whether the student used correct APA format (italicized symbols like *M*, *SD*, *t*, *p*, *r*, *F*, *N*; correct df formatting; spacing around operators; and *p* values without leading zeros).
 
 Please evaluate the student's answer and provide:
 1. **Score (0-100):** How correct is the answer? 
