@@ -268,73 +268,6 @@ router.get('/stats/popular-concepts', requireAdmin, async (req, res) => {
             `);
 
         // 統計每個概念的練習次數和正確率
-        const conceptStats = {};
-        if (concepts) {
-            concepts.forEach(item => {
-                if (item.practice_questions) {
-                    const conceptName = item.practice_questions.concept_name;
-                    if (!conceptStats[conceptName]) {
-                        conceptStats[conceptName] = {
-                            total: 0,
-                            correct: 0
-                        };
-                    }
-                    conceptStats[conceptName].total++;
-                    if (item.is_correct) {
-                        conceptStats[conceptName].correct++;
-                    }
-                }
-            });
-        }
-
-        const popularConcepts = Object.entries(conceptStats)
-            .map(([name, stats]) => ({
-                conceptName: name,
-                totalPractice: stats.total,
-                correctAnswers: stats.correct,
-                accuracy: (stats.correct / stats.total * 100).toFixed(1)
-            }))
-            .sort((a, b) => b.totalPractice - a.totalPractice)
-            .slice(0, 10);
-
-        res.json({
-            success: true,
-            concepts: popularConcepts
-        });
-    } catch (error) {
-        console.error('獲取熱門概念失敗:', error);
-        res.status(500).json({
-            success: false,
-            error: '獲取熱門概念失敗'
-        });
-    }
-});
-
-// 獲取單個會話的詳細聊天記錄
-router.get('/sessions/:sessionId/messages', requireAdmin, async (req, res) => {
-    try {
-        const { sessionId } = req.params;
-
-        // 獲取會話信息
-        const { data: session, error: sessionError } = await db.client
-            .from('chat_sessions')
-            .select('*, users(username)')
-            .eq('session_id', sessionId)
-            .single();
-
-        if (sessionError || !session) {
-            return res.status(404).json({
-                success: false,
-                error: 'Session not found'
-            });
-        }
-
-        // 獲取該會話的所有消息
-        const { data: messages, error: messagesError } = await db.client
-            .from('messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('timestamp', { ascending: true });
 
         if (messagesError) throw messagesError;
 
@@ -417,7 +350,8 @@ router.get('/users/:userId/export-chats', requireAdmin, async (req, res) => {
 router.get('/export-all-chats', requireAdmin, async (req, res) => {
     try {
         // 獲取所有用戶
-        const { data: users } = await db.client
+        const readClient = db.admin || db.client;
+        const { data: users } = await readClient
             .from('users')
             .select('user_id, username')
             .order('created_at', { ascending: false });
@@ -426,7 +360,7 @@ router.get('/export-all-chats', requireAdmin, async (req, res) => {
 
         for (const user of (users || [])) {
             // 獲取該用戶的所有會話
-            const { data: sessions } = await db.client
+            const { data: sessions } = await readClient
                 .from('chat_sessions')
                 .select('*')
                 .eq('user_id', user.user_id)
@@ -434,7 +368,7 @@ router.get('/export-all-chats', requireAdmin, async (req, res) => {
 
             const userSessions = [];
             for (const session of (sessions || [])) {
-                const { data: messages } = await db.client
+                const { data: messages } = await readClient
                     .from('messages')
                     .select('*')
                     .eq('session_id', session.session_id)
@@ -475,6 +409,107 @@ router.get('/export-all-chats', requireAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             error: '導出聊天記錄失敗'
+        });
+    }
+});
+
+// 導出所有資料（聊天記錄 + AI Practice 問答記錄）
+router.get('/export-all-data', requireAdmin, async (req, res) => {
+    try {
+        const readClient = db.admin || db.client;
+
+        // 匯出聊天記錄（沿用 export-all-chats 的結構）
+        const { data: users } = await readClient
+            .from('users')
+            .select('user_id, username')
+            .order('created_at', { ascending: false });
+
+        const chatExportData = [];
+        for (const user of (users || [])) {
+            const { data: sessions } = await readClient
+                .from('chat_sessions')
+                .select('*')
+                .eq('user_id', user.user_id)
+                .order('start_time', { ascending: false });
+
+            const userSessions = [];
+            for (const session of (sessions || [])) {
+                const { data: messages } = await readClient
+                    .from('messages')
+                    .select('*')
+                    .eq('session_id', session.session_id)
+                    .order('timestamp', { ascending: true });
+
+                userSessions.push({
+                    session_id: session.session_id,
+                    topic: session.topic || 'General Conversation',
+                    start_time: session.start_time,
+                    end_time: session.end_time,
+                    message_count: session.message_count,
+                    messages: (messages || []).map(m => ({
+                        sender: m.sender_type,
+                        content: m.content,
+                        timestamp: m.timestamp
+                    }))
+                });
+            }
+
+            if (userSessions.length > 0) {
+                chatExportData.push({
+                    user_id: user.user_id,
+                    username: user.username,
+                    total_sessions: userSessions.length,
+                    sessions: userSessions
+                });
+            }
+        }
+
+        // 匯出 AI Practice 問答記錄
+        const { data: practiceRecords, error: practiceError } = await readClient
+            .from('user_answers')
+            .select(`
+                answer_id,
+                user_id,
+                question_id,
+                user_answer,
+                is_correct,
+                time_taken,
+                answered_at,
+                users (
+                    username
+                ),
+                practice_questions (
+                    question_id,
+                    question_text,
+                    concept_name,
+                    difficulty_level,
+                    question_type,
+                    correct_answer,
+                    explanation,
+                    options
+                )
+            `)
+            .order('answered_at', { ascending: false });
+
+        if (practiceError) throw practiceError;
+
+        res.json({
+            success: true,
+            export_date: new Date().toISOString(),
+            chats: {
+                total_users: chatExportData.length,
+                users: chatExportData
+            },
+            practice_records: {
+                total_records: practiceRecords?.length || 0,
+                records: practiceRecords || []
+            }
+        });
+    } catch (error) {
+        console.error('導出所有資料失敗:', error);
+        res.status(500).json({
+            success: false,
+            error: '導出所有資料失敗'
         });
     }
 });

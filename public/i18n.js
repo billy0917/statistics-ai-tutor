@@ -177,6 +177,8 @@ const i18n = {
         admin: {
             adminTitle: '管理員控制台',
             adminSubtitle: '管理所有用戶的學習進度和系統統計',
+            exportAllData: '📦 導出全部資料',
+            exportPreparing: '正在準備匯出檔案，請稍候…',
             logoutBtn: '登出',
             backToHome: '返回首頁',
             systemOverview: '📊 系統總覽',
@@ -420,6 +422,8 @@ const i18n = {
         admin: {
             adminTitle: 'Admin Dashboard',
             adminSubtitle: 'Manage all users and system statistics',
+            exportAllData: '📦 Export All Data',
+            exportPreparing: 'Preparing export file, please wait…',
             logoutBtn: 'Logout',
             backToHome: 'Back to Home',
             systemOverview: '📊 System Overview',

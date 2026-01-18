@@ -103,9 +103,11 @@
             </div>
             <div class="flex items-center justify-between">
                 <p class="text-slate-300" data-i18n="adminSubtitle">管理所有用戶的學習進度和系統統計</p>
-                <button onclick="exportAllChats()" class="glass-dark px-4 py-2 rounded-lg text-green-400 hover:bg-green-500/20 transition text-sm font-medium flex items-center gap-2">
-                    📥 Export All Chats
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportAllData()" class="glass-dark px-4 py-2 rounded-lg text-amber-300 hover:bg-amber-500/20 transition text-sm font-medium flex items-center gap-2" data-i18n="exportAllData">
+                        📦 導出全部資料
+                    </button>
+                </div>
             </div>
             
             <!-- AI Disclaimer -->
@@ -438,6 +440,14 @@
             <div id="questionDetailContent">
                 <!-- 動態內容 -->
             </div>
+        </div>
+    </div>
+
+    <!-- 匯出等待提示 -->
+    <div id="exportLoading" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="glass-dark rounded-2xl p-6 flex items-center gap-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+            <div class="text-slate-200 text-sm" data-i18n="exportPreparing">正在準備匯出檔案，請稍候…</div>
         </div>
     </div>
 
@@ -1159,26 +1169,29 @@
             }
         }
 
-        // 導出所有用戶的聊天記錄
-        async function exportAllChats() {
+        // 導出所有資料（聊天 + AI Practice 問答記錄）
+        async function exportAllData() {
+            const loading = document.getElementById('exportLoading');
             try {
+                if (loading) loading.classList.remove('hidden');
                 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-                const response = await fetch('/api/admin/export-all-chats', {
+                const response = await fetch('/api/admin/export-all-data', {
                     headers: {
                         'X-Admin-Auth': `admin-${currentUser.username}123`
                     }
                 });
 
                 const data = await response.json();
-                
                 if (data.success) {
-                    downloadJson(data, `all_chats_export_${new Date().toISOString().split('T')[0]}.json`);
+                    downloadJson(data, `all_data_export_${new Date().toISOString().split('T')[0]}.json`);
                 } else {
                     throw new Error(data.error);
                 }
             } catch (error) {
-                console.error('Export failed:', error);
-                alert('Failed to export chat records');
+                console.error('Export all data failed:', error);
+                alert('Failed to export all data');
+            } finally {
+                if (loading) loading.classList.add('hidden');
             }
         }
 
