@@ -44,6 +44,16 @@
             background: rgba(148, 163, 184, 0.6);
             border-radius: 3px;
         }
+
+        /* 隱藏滾動條（仍可滾動） */
+        .hide-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
         
         /* 載入動畫 */
         @keyframes simpleBounce {
@@ -623,12 +633,14 @@
                         
                         <div class="flex gap-3 items-center">
                             <div class="flex-1">
-                                <input type="text" 
+                                    <textarea
                                        id="messageInput"
+                                       rows="1"
                                        placeholder="請輸入您的統計學問題..."
                                        data-i18n-placeholder="inputPlaceholder"
-                                       class="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/60 rounded-2xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent input-focus"
-                                       onkeypress="handleKeyPress(event)">
+                                        class="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/60 rounded-2xl text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent input-focus resize-none overflow-y-auto max-h-40 hide-scrollbar"
+                                       onkeydown="handleKeyPress(event)"
+                                       oninput="autoResizeTextarea(this)"></textarea>
                             </div>
                             <button id="sendButton" 
                                     onclick="sendMessage()"
@@ -775,6 +787,14 @@
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const welcomeSection = document.getElementById('welcomeSection');
+
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            const maxPx = 160;
+            const nextHeight = Math.min(el.scrollHeight, maxPx);
+            el.style.height = `${nextHeight}px`;
+        }
         
         // 應用狀態
         let currentUser = null;
@@ -1493,6 +1513,7 @@
 
         function askExample(question) {
             messageInput.value = question;
+            autoResizeTextarea(messageInput);
             sendMessage();
         }
 
@@ -1713,6 +1734,7 @@
             // 添加用戶訊息
             addMessage(message, true);
             messageInput.value = '';
+            autoResizeTextarea(messageInput);
             
             // 禁用發送按鈕和輸入框
             sendButton.disabled = true;
@@ -1851,6 +1873,9 @@
         window.addEventListener('load', async () => {
             // 初始化語言
             initLanguage();
+
+            // 初始化輸入框高度（textarea 自動增高）
+            autoResizeTextarea(messageInput);
 
             // 初始化自訂背景
             initBackgroundPicker();
