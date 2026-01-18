@@ -581,6 +581,59 @@ router.get('/export-all-data', requireAdmin, async (req, res) => {
     }
 });
 
+// 刪除所有用戶與學習資料（新學期重置用）
+router.post('/purge-all-data', requireAdmin, async (req, res) => {
+    try {
+        const adminClient = db.admin || db.client;
+        if (!adminClient) {
+            return res.status(500).json({
+                success: false,
+                error: 'Admin client not configured'
+            });
+        }
+
+        const deleteTargets = [
+            { table: 'teacher_question_answers', id: 'answer_id' },
+            { table: 'messages', id: 'message_id' },
+            { table: 'user_answers', id: 'answer_id' },
+            { table: 'chat_sessions', id: 'session_id' },
+            { table: 'learning_progress', id: 'progress_id' },
+            { table: 'common_issues', id: 'issue_id' },
+            { table: 'users', id: 'user_id' }
+        ];
+
+        const results = [];
+
+        for (const target of deleteTargets) {
+            const { count, error } = await adminClient
+                .from(target.table)
+                .delete({ count: 'exact' })
+                .neq(target.id, '00000000-0000-0000-0000-000000000000');
+
+            if (error) {
+                if (error.code === '42P01') {
+                    results.push({ table: target.table, deleted: 0, skipped: true });
+                    continue;
+                }
+                throw error;
+            }
+
+            results.push({ table: target.table, deleted: count || 0 });
+        }
+
+        res.json({
+            success: true,
+            deleted: results
+        });
+    } catch (error) {
+        console.error('刪除所有資料失敗:', error);
+        res.status(500).json({
+            success: false,
+            error: '刪除所有資料失敗'
+        });
+    }
+});
+
 // 獲取所有 AI Practice 答題記錄（分頁）
 router.get('/practice-records', requireAdmin, async (req, res) => {
     try {

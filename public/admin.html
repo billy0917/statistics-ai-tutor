@@ -107,6 +107,9 @@
                     <button onclick="exportAllData()" class="glass-dark px-4 py-2 rounded-lg text-amber-300 hover:bg-amber-500/20 transition text-sm font-medium flex items-center gap-2" data-i18n="exportAllData">
                         📦 導出全部資料
                     </button>
+                    <button onclick="openPurgeModal()" class="glass-dark px-4 py-2 rounded-lg text-red-300 hover:bg-red-500/20 transition text-sm font-medium flex items-center gap-2 border border-red-500/30" data-i18n="purgeAllData">
+                        🧨 刪除所有資料
+                    </button>
                 </div>
             </div>
             
@@ -440,6 +443,45 @@
             <div id="questionDetailContent">
                 <!-- 動態內容 -->
             </div>
+        </div>
+    </div>
+
+    <!-- 刪除所有資料確認 Modal -->
+    <div id="purgeModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50" onclick="closePurgeModal(event)">
+        <div class="glass-dark rounded-2xl p-6 max-w-lg w-full border border-red-500/40" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-bold text-red-300" data-i18n="purgeAllDataTitle">刪除所有資料</h3>
+                <button onclick="closePurgeModal()" class="text-slate-400 hover:text-slate-200 text-2xl">&times;</button>
+            </div>
+            <p class="text-sm text-red-200/90 mb-4" data-i18n="purgeAllDataWarning">
+                此操作會永久刪除所有用戶與學習紀錄，且無法復原。
+            </p>
+            <div class="space-y-3 text-sm text-slate-200">
+                <label class="flex items-start gap-2">
+                    <input id="purgeAck1" type="checkbox" class="mt-1" onchange="updatePurgeConfirmState()" />
+                    <span data-i18n="purgeAllDataAck1">我已完成必要備份並了解此操作無法復原。</span>
+                </label>
+                <label class="flex items-start gap-2">
+                    <input id="purgeAck2" type="checkbox" class="mt-1" onchange="updatePurgeConfirmState()" />
+                    <span data-i18n="purgeAllDataAck2">我確定要清空本學期所有用戶與練習記錄。</span>
+                </label>
+            </div>
+            <div class="mt-4">
+                <label class="text-sm text-slate-300" data-i18n="purgeAllDataInputLabel">請輸入 DELETE ALL 以確認</label>
+                <input id="purgeConfirmInput" type="text" class="mt-2 w-full px-3 py-2 bg-slate-800/70 border border-slate-600/60 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-400" data-i18n-placeholder="purgeAllDataInputPlaceholder" placeholder="DELETE ALL" oninput="updatePurgeConfirmState()" />
+            </div>
+            <div class="flex justify-end gap-3 mt-5">
+                <button onclick="closePurgeModal()" class="px-4 py-2 rounded-lg bg-slate-700/60 text-slate-200 hover:bg-slate-600/60 transition" data-i18n="purgeAllDataCancelBtn">取消</button>
+                <button id="purgeConfirmBtn" onclick="confirmPurgeAllData()" class="px-4 py-2 rounded-lg bg-red-600/80 text-white hover:bg-red-500/80 transition disabled:opacity-50 disabled:cursor-not-allowed" data-i18n="purgeAllDataConfirmBtn" disabled>永久刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 刪除等待提示 -->
+    <div id="purgeLoading" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50">
+        <div class="glass-dark rounded-2xl p-6 flex items-center gap-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-400"></div>
+            <div class="text-slate-200 text-sm" data-i18n="purgeAllDataLoading">正在刪除資料，請稍候…</div>
         </div>
     </div>
 
@@ -1192,6 +1234,86 @@
                 alert('Failed to export all data');
             } finally {
                 if (loading) loading.classList.add('hidden');
+            }
+        }
+
+        // 打開刪除所有資料確認視窗
+        function openPurgeModal() {
+            const modal = document.getElementById('purgeModal');
+            if (modal) {
+                resetPurgeForm();
+                modal.classList.remove('hidden');
+            }
+        }
+
+        // 關閉刪除所有資料確認視窗
+        function closePurgeModal(event) {
+            if (event && event.target && event.target.id !== 'purgeModal') return;
+            const modal = document.getElementById('purgeModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            resetPurgeForm();
+        }
+
+        // 更新刪除確認按鈕狀態
+        function updatePurgeConfirmState() {
+            const ack1 = document.getElementById('purgeAck1');
+            const ack2 = document.getElementById('purgeAck2');
+            const input = document.getElementById('purgeConfirmInput');
+            const confirmBtn = document.getElementById('purgeConfirmBtn');
+            const requiredText = 'DELETE ALL';
+            const isValid = !!ack1?.checked && !!ack2?.checked && (input?.value || '').trim().toUpperCase() === requiredText;
+
+            if (confirmBtn) confirmBtn.disabled = !isValid;
+        }
+
+        // 重置刪除確認表單
+        function resetPurgeForm() {
+            const ack1 = document.getElementById('purgeAck1');
+            const ack2 = document.getElementById('purgeAck2');
+            const input = document.getElementById('purgeConfirmInput');
+            const confirmBtn = document.getElementById('purgeConfirmBtn');
+
+            if (ack1) ack1.checked = false;
+            if (ack2) ack2.checked = false;
+            if (input) input.value = '';
+            if (confirmBtn) confirmBtn.disabled = true;
+        }
+
+        // 最終確認並執行刪除
+        async function confirmPurgeAllData() {
+            const finalConfirm = langManager.t('purgeAllDataFinalConfirm', 'admin');
+            if (!confirm(finalConfirm)) return;
+            await purgeAllData();
+        }
+
+        // 呼叫後端刪除所有資料
+        async function purgeAllData() {
+            const loading = document.getElementById('purgeLoading');
+            try {
+                if (loading) loading.classList.remove('hidden');
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                const response = await fetch('/api/admin/purge-all-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Auth': `admin-${currentUser.username}123`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(langManager.t('purgeAllDataSuccess', 'admin'));
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Purge all data failed:', error);
+                alert(langManager.t('purgeAllDataFailed', 'admin'));
+            } finally {
+                if (loading) loading.classList.add('hidden');
+                closePurgeModal();
             }
         }
 
