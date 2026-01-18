@@ -268,6 +268,73 @@ router.get('/stats/popular-concepts', requireAdmin, async (req, res) => {
             `);
 
         // 統計每個概念的練習次數和正確率
+        const conceptStats = {};
+        if (concepts) {
+            concepts.forEach(item => {
+                if (item.practice_questions) {
+                    const conceptName = item.practice_questions.concept_name;
+                    if (!conceptStats[conceptName]) {
+                        conceptStats[conceptName] = {
+                            total: 0,
+                            correct: 0
+                        };
+                    }
+                    conceptStats[conceptName].total++;
+                    if (item.is_correct) {
+                        conceptStats[conceptName].correct++;
+                    }
+                }
+            });
+        }
+
+        const popularConcepts = Object.entries(conceptStats)
+            .map(([name, stats]) => ({
+                conceptName: name,
+                totalPractice: stats.total,
+                correctAnswers: stats.correct,
+                accuracy: (stats.correct / stats.total * 100).toFixed(1)
+            }))
+            .sort((a, b) => b.totalPractice - a.totalPractice)
+            .slice(0, 10);
+
+        res.json({
+            success: true,
+            concepts: popularConcepts
+        });
+    } catch (error) {
+        console.error('獲取熱門概念失敗:', error);
+        res.status(500).json({
+            success: false,
+            error: '獲取熱門概念失敗'
+        });
+    }
+});
+
+// 獲取單個會話的詳細聊天記錄
+router.get('/sessions/:sessionId/messages', requireAdmin, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+
+        // 獲取會話信息
+        const { data: session, error: sessionError } = await db.client
+            .from('chat_sessions')
+            .select('*, users(username)')
+            .eq('session_id', sessionId)
+            .single();
+
+        if (sessionError || !session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            });
+        }
+
+        // 獲取該會話的所有消息
+        const { data: messages, error: messagesError } = await db.client
+            .from('messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: true });
 
         if (messagesError) throw messagesError;
 
