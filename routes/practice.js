@@ -211,44 +211,48 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         }
 
         // 概念特定要求：樣本大小 (Sample Size)
-        if (concept === 'Sample Size') {
-            conceptSpecificInstructions = `
+                if (concept === 'Sample Size') {
+                        conceptSpecificInstructions = `
 **SAMPLE SIZE QUESTION REQUIREMENTS (Concept: "Sample Size")**
-- The question MUST ask the student to compute the MINIMUM required sample size n.
-- The question MUST provide a significance level \u03b1 (two-sided) OR confidence level (1-\u03b1), AND a desired precision E (margin of error).
-- The question MUST also provide any additional parameter(s) needed for a solvable sample size calculation:
-  - For estimating a population mean: provide population SD \u03c3 (assume known), use $n = (z_{1-\u03b1/2} \u03c3 / E)^2$.
-  - For estimating a proportion: provide expected p OR explicitly state to use conservative p=0.5, use $n = z_{1-\u03b1/2}^2\,p(1-p)/E^2$.
+- The logic MUST be based on **statistical power** for comparing two groups or testing an intervention effect (e.g., a fitness program reduces weight).
+- The question MUST ask the student to compute the MINIMUM required sample size per group (assume equal group sizes).
+- The question MUST provide:
+    - Effect size (Cohen's d): small 0.2, medium 0.5, large 0.8
+    - Type I error (\u03b1), typically 0.05 (two-sided)
+    - Power (1-\u03b2), typically 0.80 or 0.90
 - The final answer MUST be an integer and MUST round up using the ceiling rule.
-- Keep the context in psychology research (e.g., estimating mean anxiety score, proportion with a symptom).
+- Keep the context in psychology research (e.g., intervention vs control, pre-post with two groups).
+- Use the power-based Z formula for two independent groups (equal n):
+    $n = 2\,\left(\frac{Z_{1-\u03b1/2} + Z_{1-\u03b2}}{d}\right)^2$
+    (If you choose a one-tailed test, state it explicitly and use the correct Z values.)
 `;
 
-                        sampleSizeJsonSchema = `,
-        "sample_size_parameters": {
-                "type": "mean_or_proportion", // MUST be either "mean" or "proportion"
-                "alpha": 0.05,                 // two-sided alpha OR
-                "confidence_level": 0.95,       // 1 - alpha (provide one of alpha/confidence_level)
-                "E": 2,                         // margin of error
-                "sigma": 8,                     // required if type = "mean"
-                "p": 0.5,                       // required if type = "proportion" (use 0.5 if conservative)
-                "z": 1.96                       // z critical value used
-        }`;
+                                                sampleSizeJsonSchema = `,
+                "sample_size_parameters": {
+                                "design": "two_group_independent", // power-based two-group comparison
+                                "effect_size_d": 0.5,               // Cohen's d
+                                "alpha": 0.05,                      // Type I error (two-sided unless stated)
+                                "power": 0.80,                      // 1 - beta
+                                "beta": 0.20,                       // optional if power provided
+                                "z_alpha": 1.96,                    // Z_{1-\u03b1/2} for two-sided alpha
+                                "z_beta": 0.84                      // Z_{1-\u03b2}
+                }`;
 
             if (questionType === 'multiple_choice') {
                 conceptSpecificInstructions += `
 **For Multiple Choice (Sample Size):**
-- Provide 4 plausible integer sample sizes as options.
+- Provide 4 plausible integer sample sizes (per group) as options.
 - The correct option MUST correspond to the CEILING of the computed n.
 - The exact computed ceiling value MUST appear in the options (no "closest" answers).
 - Do NOT say "none of the options" or "closest" in the explanation.
-- The explanation MUST explicitly state the computed n and which option matches it.
+- The explanation MUST explicitly state the computed n (per group) and which option matches it.
 `;
             }
 
             if (questionType === 'calculation') {
                 conceptSpecificInstructions += `
 **For Calculation (Sample Size):**
-- Show the z critical value used (e.g., 1.96 for \u03b1=0.05 two-sided) and show the rounding-up step.
+- Show the Z values used (e.g., 1.96 for \u03b1=0.05 two-sided; 0.84 for power=0.80) and show the rounding-up step.
 `;
             }
         }
@@ -390,33 +394,44 @@ ${conceptSpecificInstructions}
                 }
             }
 
-            // Sample Size MC: enforce correct option by computing from structured parameters
+            // Sample Size MC: enforce correct option by computing from power-based parameters
             if (questionData.concept_name === 'Sample Size' && questionData.question_type === 'multiple_choice') {
                 const params = questionData.sample_size_parameters || {};
-                const type = params.type;
+                const d = typeof params.effect_size_d === 'number' ? params.effect_size_d : null;
                 const alpha = typeof params.alpha === 'number' ? params.alpha : null;
-                const confidence = typeof params.confidence_level === 'number' ? params.confidence_level : null;
-                const E = typeof params.E === 'number' ? params.E : null;
-                const sigma = typeof params.sigma === 'number' ? params.sigma : null;
-                const p = typeof params.p === 'number' ? params.p : null;
-                const z = typeof params.z === 'number' ? params.z : null;
+                const power = typeof params.power === 'number' ? params.power : null;
+                const beta = typeof params.beta === 'number' ? params.beta : null;
+                const zAlpha = typeof params.z_alpha === 'number' ? params.z_alpha : null;
+                const zBeta = typeof params.z_beta === 'number' ? params.z_beta : null;
 
-                const hasNeeded = type && E && z && ((type === 'mean' && sigma) || (type === 'proportion' && (p !== null && p !== undefined)));
+                const zAlphaLookup = (a) => {
+                    if (a === 0.10) return 1.645;
+                    if (a === 0.05) return 1.96;
+                    if (a === 0.01) return 2.576;
+                    return null;
+                };
+
+                const zBetaLookup = (pwr) => {
+                    if (pwr === 0.80) return 0.84;
+                    if (pwr === 0.90) return 1.28;
+                    if (pwr === 0.95) return 1.645;
+                    return null;
+                };
+
+                const resolvedPower = power ?? (typeof beta === 'number' ? 1 - beta : null);
+                const resolvedZAlpha = zAlpha ?? (typeof alpha === 'number' ? zAlphaLookup(alpha) : null);
+                const resolvedZBeta = zBeta ?? (typeof resolvedPower === 'number' ? zBetaLookup(resolvedPower) : null);
+
+                const hasNeeded = d && resolvedZAlpha && resolvedZBeta;
 
                 if (hasNeeded) {
-                    let nRaw;
-                    if (type === 'mean') {
-                        nRaw = Math.pow((z * sigma) / E, 2);
-                    } else {
-                        nRaw = (Math.pow(z, 2) * p * (1 - p)) / Math.pow(E, 2);
-                    }
-
+                    const nRaw = 2 * Math.pow((resolvedZAlpha + resolvedZBeta) / d, 2);
                     const nCeil = Math.ceil(nRaw);
                     const nFloor = Math.floor(nRaw);
                     const nRound = Math.round(nRaw);
-                    const nAlt = Math.max(1, Math.ceil(Math.pow((1.64 * (sigma || Math.sqrt(p * (1 - p)))) / E, 2)));
+                    const nAlt = Math.max(1, nCeil + 2);
 
-                    const pool = [nCeil, nFloor, nRound, nAlt, Math.max(1, nCeil - 1), nCeil + 1, nCeil + 2]
+                    const pool = [nCeil, nFloor, nRound, nAlt, Math.max(1, nCeil - 1), nCeil + 1, nCeil + 3]
                         .filter(n => Number.isFinite(n) && n > 0)
                         .map(n => Math.round(n));
 
@@ -434,15 +449,22 @@ ${conceptSpecificInstructions}
                     const correctIndex = options.indexOf(nCeil);
                     questionData.correct_answer = String.fromCharCode(65 + correctIndex);
 
-                    console.log('✅ Sample Size MC options rebuilt with correct ceiling n:', {
+                    questionData.explanation = `The minimum sample size per group is computed by n = 2[(Z_{1-\u03b1/2} + Z_{1-\u03b2})/d]^2. With \u03b1 = ${alpha ?? '0.05'} (two-sided), Z_{1-\u03b1/2} = ${resolvedZAlpha.toFixed(2)}, power = ${(resolvedPower ?? 0.8).toFixed(2)}, Z_{1-\u03b2} = ${resolvedZBeta.toFixed(2)}, and d = ${d}. n = 2[( ${resolvedZAlpha.toFixed(2)} + ${resolvedZBeta.toFixed(2)} )/${d}]^2 = ${nRaw.toFixed(2)}. Using the ceiling rule, n = ${nCeil} per group (total = ${nCeil * 2}). Option ${String.fromCharCode(65 + correctIndex)} is correct.`;
+
+                    console.log('✅ Sample Size MC options rebuilt with correct ceiling n (power-based):', {
                         nRaw,
                         nCeil,
                         options: questionData.options,
-                        correct_answer: questionData.correct_answer
+                        correct_answer: questionData.correct_answer,
+                        d,
+                        alpha,
+                        power: resolvedPower,
+                        zAlpha: resolvedZAlpha,
+                        zBeta: resolvedZBeta
                     });
                 } else {
                     console.warn('⚠️ Sample Size parameters missing; cannot enforce MC options.', {
-                        type, alpha, confidence, E, sigma, p, z
+                        d, alpha, power: resolvedPower, beta, zAlpha, zBeta
                     });
                 }
             }
