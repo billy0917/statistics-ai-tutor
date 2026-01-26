@@ -166,6 +166,11 @@
         .source-btn:not(.selected):hover {
             border-color: rgba(100, 116, 139, 0.8);
         }
+
+        /* 截圖模式 */
+        .screenshot-mode .hide-when-screenshot {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-cover bg-center bg-no-repeat p-4 md:p-8" 
@@ -176,7 +181,7 @@
     
     <div class="relative max-w-4xl mx-auto">
         <!-- 標題區 -->
-        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+        <div class="glass rounded-2xl p-6 mb-6 fade-in hide-when-screenshot">
             <div class="flex items-center justify-between mb-4">
                 <h1 class="text-3xl font-bold text-slate-100" data-i18n="title">📚 統計學練習系統</h1>
                 <div class="flex gap-3 items-center">
@@ -245,7 +250,7 @@
         </div>
 
         <!-- 控制面板 -->
-        <div class="glass rounded-2xl p-6 mb-6 fade-in">
+        <div class="glass rounded-2xl p-6 mb-6 fade-in hide-when-screenshot">
             <!-- 題目來源選擇 -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-slate-200 mb-3">Question Source</label>
@@ -423,7 +428,46 @@
 
         <!-- 進度統計區 -->
         <div id="statsArea" class="glass rounded-2xl p-6 mb-6 fade-in hidden">
-            <h3 class="text-xl font-bold text-slate-100 mb-4" data-i18n="statsTitle">📊 練習統計</h3>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 class="text-xl font-bold text-slate-100" data-i18n="statsTitle">📊 練習統計</h3>
+                <button id="toggleScreenshotModeBtn" class="px-3 py-1.5 rounded-lg bg-slate-700/60 text-slate-200 text-xs hover:bg-slate-600/60 transition" data-i18n="screenshotModeBtn">
+                    📸 Screenshot Mode
+                </button>
+            </div>
+
+            <!-- Homework Snapshot -->
+            <div class="mb-4 p-4 glass-dark rounded-xl border border-blue-500/30">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-sm font-semibold text-blue-300" data-i18n="snapshotTitle">Homework Snapshot</div>
+                    <div class="text-xs text-slate-400" id="snapshotUpdatedAt">-</div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3 text-sm text-slate-200">
+                    <div><span class="text-slate-400" data-i18n="snapshotUserIdLabel">User ID:</span> <span id="snapshotUserId">-</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotConceptLabel">Concept:</span> <span id="snapshotConcept">-</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotDifficultyLabel">Difficulty:</span> <span id="snapshotDifficulty">-</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotTypeLabel">Question Type:</span> <span id="snapshotType">-</span></div>
+                </div>
+                <div class="mt-3 grid md:grid-cols-2 gap-3 text-sm text-slate-200">
+                    <div>
+                        <span class="text-slate-400" data-i18n="snapshotConceptCountsLabel">Concept Counts:</span>
+                        <div id="snapshotConceptCounts" class="mt-1 text-slate-200">-</div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400" data-i18n="snapshotTypeCountsLabel">Type Counts:</span>
+                        <div id="snapshotTypeCounts" class="mt-1 text-slate-200">-</div>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-200">
+                    <div><span class="text-slate-400" data-i18n="snapshotTotalLabel">Total:</span> <span id="snapshotTotal">0</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotCorrectLabel">Correct:</span> <span id="snapshotCorrect">0</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotIncorrectLabel">Incorrect:</span> <span id="snapshotIncorrect">0</span></div>
+                    <div><span class="text-slate-400" data-i18n="snapshotAccuracyLabel">Accuracy:</span> <span id="snapshotAccuracy">0%</span></div>
+                </div>
+                <div class="mt-3 text-xs text-slate-400" data-i18n="snapshotTip">
+                    Screenshot tip: Windows Win+Shift+S | Mac Cmd+Shift+4
+                </div>
+            </div>
+
             <div class="grid md:grid-cols-4 gap-4">
                 <div class="text-center p-4 glass-dark rounded-lg border border-blue-500/30">
                     <div class="text-3xl font-bold text-blue-400" id="totalCount">0</div>
@@ -445,7 +489,7 @@
         </div>
 
         <!-- 題目顯示區 -->
-        <div id="questionArea" class="glass rounded-2xl p-8 mb-6 fade-in hidden">
+        <div id="questionArea" class="glass rounded-2xl p-8 mb-6 fade-in hidden hide-when-screenshot">
             <!-- 題目標題 -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-3">
@@ -510,7 +554,7 @@
         </div>
 
         <!-- 載入動畫 -->
-        <div id="loadingArea" class="glass rounded-2xl p-12 text-center hidden">
+        <div id="loadingArea" class="glass rounded-2xl p-12 text-center hidden hide-when-screenshot">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
             <p class="text-slate-300" data-i18n="loadingMsg">正在生成題目...</p>
         </div>
@@ -527,7 +571,9 @@
         let stats = {
             total: 0,
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            conceptCounts: {},
+            typeCounts: {}
         };
 
         // DOM 元素
@@ -546,6 +592,17 @@
         const userInfoArea = document.getElementById('userInfoArea');
         const notLoggedInArea = document.getElementById('notLoggedInArea');
         const displayUserName = document.getElementById('displayUserName');
+        const snapshotUserId = document.getElementById('snapshotUserId');
+        const snapshotConcept = document.getElementById('snapshotConcept');
+        const snapshotDifficulty = document.getElementById('snapshotDifficulty');
+        const snapshotType = document.getElementById('snapshotType');
+        const snapshotConceptCounts = document.getElementById('snapshotConceptCounts');
+        const snapshotTypeCounts = document.getElementById('snapshotTypeCounts');
+        const snapshotTotal = document.getElementById('snapshotTotal');
+        const snapshotCorrect = document.getElementById('snapshotCorrect');
+        const snapshotIncorrect = document.getElementById('snapshotIncorrect');
+        const snapshotAccuracy = document.getElementById('snapshotAccuracy');
+        const snapshotUpdatedAt = document.getElementById('snapshotUpdatedAt');
 
         // 初始化用戶信息（從主頁面的登錄狀態）
         function initUser() {
@@ -559,6 +616,7 @@
                     
                     // 顯示用戶信息
                     displayUserName.textContent = currentUser.username;
+                    if (snapshotUserId) snapshotUserId.textContent = currentUser.username;
                     userInfoArea.classList.remove('hidden');
                     notLoggedInArea.classList.add('hidden');
                     
@@ -586,6 +644,7 @@
             currentUser = null;
             userInfoArea.classList.add('hidden');
             notLoggedInArea.classList.remove('hidden');
+            if (snapshotUserId) snapshotUserId.textContent = '-';
             
             // 禁用練習功能
             generateBtn.disabled = true;
@@ -913,6 +972,17 @@
         initUser();
         selectQuestionSource('ai'); // 預設選擇 AI 生成
 
+        // 截圖模式切換
+        document.getElementById('toggleScreenshotModeBtn')?.addEventListener('click', () => {
+            const isOn = document.body.classList.toggle('screenshot-mode');
+            const btn = document.getElementById('toggleScreenshotModeBtn');
+            if (btn) {
+                btn.textContent = isOn
+                    ? langManager.t('screenshotModeOn', 'practice')
+                    : langManager.t('screenshotModeBtn', 'practice');
+            }
+        });
+
         // 生成新題目
         generateBtn.addEventListener('click', async () => {
             // 檢查用戶是否已登入
@@ -1061,19 +1131,38 @@
             
             // 難度標籤
             const difficultyBadge = document.getElementById('difficultyBadge');
-            const difficultyNames = { 1: '基礎', 2: '中級', 3: '進階' };
+            const difficultyNames = {
+                1: langManager.t('difficultyBasicShort', 'practice'),
+                2: langManager.t('difficultyMediumShort', 'practice'),
+                3: langManager.t('difficultyAdvancedShort', 'practice')
+            };
             const difficultyClasses = { 1: 'difficulty-basic', 2: 'difficulty-medium', 3: 'difficulty-advanced' };
             difficultyBadge.textContent = difficultyNames[question.difficulty_level];
             difficultyBadge.className = 'difficulty-badge ' + difficultyClasses[question.difficulty_level];
 
             // 題型
-            const typeNames = {
-                'multiple_choice': '選擇題 (MC)',
-                'case_study': '案例分析',
-                'calculation': '計算題',
-                'interpretation': '解釋題'
-            };
+            const isZh = langManager.getCurrentLanguage() === 'zh-TW';
+            const typeNames = isZh
+                ? {
+                    'multiple_choice': '選擇題 (MC)',
+                    'case_study': '案例分析',
+                    'calculation': '計算題',
+                    'interpretation': '解釋題',
+                    'true_false': '是非題'
+                }
+                : {
+                    'multiple_choice': 'Multiple Choice (MC)',
+                    'case_study': 'Case Study',
+                    'calculation': 'Calculation',
+                    'interpretation': 'Interpretation',
+                    'true_false': 'True/False'
+                };
             document.getElementById('questionType').textContent = typeNames[question.question_type];
+            if (snapshotConcept) snapshotConcept.textContent = question.concept_name || '-';
+            if (snapshotDifficulty) snapshotDifficulty.textContent = difficultyNames[question.difficulty_level] || '-';
+            if (snapshotType) snapshotType.textContent = typeNames[question.question_type] || question.question_type || '-';
+            renderSnapshotCounts();
+            if (snapshotUpdatedAt) snapshotUpdatedAt.textContent = new Date().toLocaleString();
 
             // 顯示選項或輸入框
             const optionsArea = document.getElementById('optionsArea');
@@ -1437,10 +1526,58 @@
                 stats.incorrect++;
             }
 
+            if (currentQuestion?.concept_name) {
+                const concept = currentQuestion.concept_name;
+                stats.conceptCounts[concept] = (stats.conceptCounts[concept] || 0) + 1;
+            }
+            if (currentQuestion?.question_type) {
+                const type = currentQuestion.question_type;
+                stats.typeCounts[type] = (stats.typeCounts[type] || 0) + 1;
+            }
+
             document.getElementById('totalCount').textContent = stats.total;
             document.getElementById('correctCount').textContent = stats.correct;
             document.getElementById('incorrectCount').textContent = stats.incorrect;
             document.getElementById('accuracy').textContent = Math.round((stats.correct / stats.total) * 100) + '%';
+
+            if (snapshotTotal) snapshotTotal.textContent = stats.total;
+            if (snapshotCorrect) snapshotCorrect.textContent = stats.correct;
+            if (snapshotIncorrect) snapshotIncorrect.textContent = stats.incorrect;
+            if (snapshotAccuracy) snapshotAccuracy.textContent = Math.round((stats.correct / stats.total) * 100) + '%';
+            renderSnapshotCounts();
+            if (snapshotUpdatedAt) snapshotUpdatedAt.textContent = new Date().toLocaleString();
+        }
+
+        function renderSnapshotCounts() {
+            const isZh = langManager.getCurrentLanguage() === 'zh-TW';
+            if (snapshotConceptCounts) {
+                const conceptEntries = Object.entries(stats.conceptCounts);
+                snapshotConceptCounts.textContent = conceptEntries.length
+                    ? conceptEntries.map(([concept, count]) => `${concept} ×${count}`).join(isZh ? '，' : ', ')
+                    : '-';
+            }
+
+            if (snapshotTypeCounts) {
+                const typeNames = isZh
+                    ? {
+                        'multiple_choice': '選擇題 (MC)',
+                        'case_study': '案例分析',
+                        'calculation': '計算題',
+                        'interpretation': '解釋題',
+                        'true_false': '是非題'
+                    }
+                    : {
+                        'multiple_choice': 'Multiple Choice (MC)',
+                        'case_study': 'Case Study',
+                        'calculation': 'Calculation',
+                        'interpretation': 'Interpretation',
+                        'true_false': 'True/False'
+                    };
+                const typeEntries = Object.entries(stats.typeCounts);
+                snapshotTypeCounts.textContent = typeEntries.length
+                    ? typeEntries.map(([type, count]) => `${typeNames[type] || type} ×${count}`).join(isZh ? '，' : ', ')
+                    : '-';
+            }
         }
 
         // 下一題
