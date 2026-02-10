@@ -168,6 +168,302 @@ async function ensureConceptExistsInSupabase(conceptName) {
     }
 }
 
+// ============ 計算驗證工具函數 ============
+
+/**
+ * Compute basic descriptive statistics from an array of numbers.
+ * Uses sample SD (N-1 denominator).
+ */
+function computeBasicStats(data) {
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const n = data.length;
+    const sum = data.reduce((a, b) => a + b, 0);
+    const mean = sum / n;
+    const ss = data.reduce((acc, x) => acc + (x - mean) ** 2, 0);
+    const variance = n > 1 ? ss / (n - 1) : 0;
+    const sd = Math.sqrt(variance);
+    const se = sd / Math.sqrt(n);
+    return { n, sum, mean, variance, sd, se };
+}
+
+function computeOneSampleTTest(data, populationMean) {
+    const stats = computeBasicStats(data);
+    if (!stats || stats.se === 0) return null;
+    const t = (stats.mean - populationMean) / stats.se;
+    return { ...stats, t, df: stats.n - 1, populationMean };
+}
+
+function computeIndependentTTest(data1, data2) {
+    const s1 = computeBasicStats(data1);
+    const s2 = computeBasicStats(data2);
+    if (!s1 || !s2) return null;
+    const pooledVar = ((s1.n - 1) * s1.variance + (s2.n - 1) * s2.variance) / (s1.n + s2.n - 2);
+    const se = Math.sqrt(pooledVar * (1 / s1.n + 1 / s2.n));
+    if (se === 0) return null;
+    const t = (s1.mean - s2.mean) / se;
+    return { group1: s1, group2: s2, pooledVar, se, t, df: s1.n + s2.n - 2 };
+}
+
+function computePairedTTest(dataPre, dataPost) {
+    if (!Array.isArray(dataPre) || !Array.isArray(dataPost) || dataPre.length !== dataPost.length) return null;
+    const diffs = dataPre.map((v, i) => v - dataPost[i]);
+    const stats = computeBasicStats(diffs);
+    if (!stats || stats.se === 0) return null;
+    const t = stats.mean / stats.se;
+    return { diffStats: stats, t, df: stats.n - 1, diffs };
+}
+
+function computePearsonR(x, y) {
+    if (!Array.isArray(x) || !Array.isArray(y) || x.length !== y.length || x.length < 3) return null;
+    const n = x.length;
+    const mx = x.reduce((a, b) => a + b, 0) / n;
+    const my = y.reduce((a, b) => a + b, 0) / n;
+    let ssX = 0, ssY = 0, ssXY = 0;
+    for (let i = 0; i < n; i++) {
+        ssX += (x[i] - mx) ** 2;
+        ssY += (y[i] - my) ** 2;
+        ssXY += (x[i] - mx) * (y[i] - my);
+    }
+    if (ssX === 0 || ssY === 0) return null;
+    const r = ssXY / Math.sqrt(ssX * ssY);
+    return { r, n, df: n - 2, meanX: mx, meanY: my };
+}
+
+// t-distribution critical values for α = 0.05, two-tailed
+const T_CRITICAL_005 = {
+    1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+    6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+    11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+    16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+    25: 2.060, 30: 2.042, 40: 2.021, 60: 2.000, 120: 1.980
+};
+
+function getTCritical(df) {
+    if (T_CRITICAL_005[df]) return T_CRITICAL_005[df];
+    const dfs = Object.keys(T_CRITICAL_005).map(Number).sort((a, b) => a - b);
+    for (let i = 0; i < dfs.length - 1; i++) {
+        if (df > dfs[i] && df < dfs[i + 1]) {
+            const ratio = (df - dfs[i]) / (dfs[i + 1] - dfs[i]);
+            return T_CRITICAL_005[dfs[i]] + ratio * (T_CRITICAL_005[dfs[i + 1]] - T_CRITICAL_005[dfs[i]]);
+        }
+    }
+    return 1.96; // large df approaches z
+}
+
+function r2(n) { return parseFloat(n.toFixed(2)); }
+function r4(n) { return parseFloat(n.toFixed(4)); }
+
+/**
+ * Get computation_steps JSON schema for the prompt based on concept
+ */
+function getComputationStepsSchema(concept) {
+    switch (concept) {
+        case 'Descriptive Statistics':
+        case 'Standard Deviation':
+            return `,\n    "computation_steps": {\n        "raw_data": [/* all numbers from the question */],\n        "n": 0, "sum": 0, "mean": 0, "sd": 0\n    }`;
+        case 'One-Sample t-Test':
+            return `,\n    "computation_steps": {\n        "raw_data": [/* all participant scores */],\n        "n": 0, "mean": 0, "sd": 0, "se": 0,\n        "population_mean": 0,\n        "test_statistic": 0, "df": 0\n    }`;
+        case 'Independent Samples t-Test':
+            return `,\n    "computation_steps": {\n        "raw_data_group1": [], "raw_data_group2": [],\n        "n1": 0, "n2": 0, "mean1": 0, "mean2": 0, "sd1": 0, "sd2": 0,\n        "pooled_variance": 0, "se": 0,\n        "test_statistic": 0, "df": 0\n    }`;
+        case 'Paired Samples t-Test':
+            return `,\n    "computation_steps": {\n        "raw_data_pre": [], "raw_data_post": [],\n        "differences": [],\n        "n": 0, "mean_diff": 0, "sd_diff": 0, "se_diff": 0,\n        "test_statistic": 0, "df": 0\n    }`;
+        case 'Correlation Analysis':
+            return `,\n    "computation_steps": {\n        "raw_data_x": [], "raw_data_y": [],\n        "n": 0, "r": 0, "df": 0\n    }`;
+        case 'Simple Regression':
+            return `,\n    "computation_steps": {\n        "raw_data_x": [], "raw_data_y": [],\n        "n": 0, "slope": 0, "intercept": 0, "r_squared": 0\n    }`;
+        case 'Chi-Square Test':
+            return `,\n    "computation_steps": {\n        "observed": [[0,0],[0,0]], "expected": [[0,0],[0,0]],\n        "chi_square": 0, "df": 0, "n_total": 0\n    }`;
+        default:
+            return '';
+    }
+}
+
+/**
+ * Verify AI computation_steps against independent recalculation.
+ * Returns correctedStats when discrepancies are found.
+ */
+function verifyAndCorrectComputations(questionData) {
+    const steps = questionData.computation_steps;
+    if (!steps) return { verified: false, noSteps: true };
+
+    const corrections = {};
+    let needsCorrection = false;
+    let correctedStats = null;
+
+    // Try to extract population_mean from question text if not in steps
+    let populationMean = steps.population_mean;
+    if (populationMean === undefined && questionData.question_text) {
+        const qText = questionData.question_text;
+        // Match patterns like "population mean of 16", "μ = 100", "population average of 30"
+        const popMatch = qText.match(/population\s+(?:mean|average)\s+(?:of|is|=|equals?)\s*([\d.]+)/i)
+            || qText.match(/[μµ]\s*=\s*([\d.]+)/)
+            || qText.match(/(?:compare|test)\s+(?:against|to|with)\s+(?:a\s+)?(?:mean\s+(?:of\s+)?)?([\d.]+)/i);
+        if (popMatch) {
+            populationMean = parseFloat(popMatch[1]);
+            console.log(`📌 Extracted population_mean=${populationMean} from question text`);
+        }
+    }
+
+    // --- One-sample t-test or descriptive stats ---
+    if (steps.raw_data && Array.isArray(steps.raw_data) && steps.raw_data.length >= 2) {
+        const computed = computeBasicStats(steps.raw_data);
+        if (computed) {
+            if (steps.mean !== undefined && Math.abs(computed.mean - steps.mean) > 0.05) {
+                corrections.mean = { ai: steps.mean, correct: r2(computed.mean) };
+                needsCorrection = true;
+            }
+            if (steps.sd !== undefined && Math.abs(computed.sd - steps.sd) > 0.15) {
+                corrections.sd = { ai: steps.sd, correct: r2(computed.sd) };
+                needsCorrection = true;
+            }
+            if (populationMean !== undefined && !isNaN(populationMean)) {
+                const tResult = computeOneSampleTTest(steps.raw_data, populationMean);
+                if (tResult) {
+                    correctedStats = tResult;
+                    if (steps.test_statistic !== undefined && Math.abs(tResult.t - steps.test_statistic) > 0.15) {
+                        corrections.t = { ai: steps.test_statistic, correct: r2(tResult.t) };
+                        needsCorrection = true;
+                    }
+                    // Even if AI didn't report test_statistic, if there's a mean error the t will be wrong
+                    if (corrections.mean || corrections.sd) {
+                        needsCorrection = true;
+                    }
+                }
+            } else {
+                correctedStats = computed;
+            }
+        }
+    }
+
+    // --- Independent samples t-test ---
+    if (steps.raw_data_group1 && steps.raw_data_group2 &&
+        Array.isArray(steps.raw_data_group1) && Array.isArray(steps.raw_data_group2) &&
+        steps.raw_data_group1.length >= 2 && steps.raw_data_group2.length >= 2) {
+        const result = computeIndependentTTest(steps.raw_data_group1, steps.raw_data_group2);
+        if (result) {
+            correctedStats = result;
+            if (steps.test_statistic !== undefined && Math.abs(result.t - steps.test_statistic) > 0.15) {
+                corrections.t = { ai: steps.test_statistic, correct: r2(result.t) };
+                needsCorrection = true;
+            }
+        }
+    }
+
+    // --- Paired samples t-test ---
+    if (steps.raw_data_pre && steps.raw_data_post &&
+        Array.isArray(steps.raw_data_pre) && Array.isArray(steps.raw_data_post)) {
+        const result = computePairedTTest(steps.raw_data_pre, steps.raw_data_post);
+        if (result) {
+            correctedStats = result;
+            if (steps.test_statistic !== undefined && Math.abs(result.t - steps.test_statistic) > 0.15) {
+                corrections.t = { ai: steps.test_statistic, correct: r2(result.t) };
+                needsCorrection = true;
+            }
+        }
+    }
+
+    // --- Correlation ---
+    if (steps.raw_data_x && steps.raw_data_y &&
+        Array.isArray(steps.raw_data_x) && Array.isArray(steps.raw_data_y)) {
+        const result = computePearsonR(steps.raw_data_x, steps.raw_data_y);
+        if (result) {
+            correctedStats = result;
+            if (steps.r !== undefined && Math.abs(result.r - steps.r) > 0.05) {
+                corrections.r = { ai: steps.r, correct: r4(result.r) };
+                needsCorrection = true;
+            }
+        }
+    }
+
+    return { verified: !needsCorrection, needsCorrection, corrections, correctedStats };
+}
+
+/**
+ * Rebuild MC options for t-test questions using backend-verified stats
+ */
+function rebuildTTestMCOptions(correctedStats) {
+    const { t, df } = correctedStats;
+    if (t === undefined || df === undefined) return null;
+
+    const tRounded = r2(t);
+    const tCritical = getTCritical(df);
+    const isSignificant = Math.abs(t) > tCritical;
+    const pStr = isSignificant ? 'p < .05' : 'p > .05';
+    const pStrWrong = isSignificant ? 'p > .05' : 'p < .05';
+
+    const correctOpt = `t(${df}) = ${tRounded}, ${pStr}`;
+
+    // Generate diverse distractors: vary t-value, df, and significance
+    // Distractor 1: wrong df, close t-value, same significance
+    const wrongDf = df + (Math.random() > 0.5 ? 2 : -2);
+    // Distractor 2: noticeably different t-value, wrong significance
+    const tShifted = t > 0 ? r2(Math.max(0.3, t - 1.6)) : r2(Math.min(-0.3, t + 1.6));
+    // Distractor 3: further t-value in opposite significance zone
+    const tFarther = t > 0 ? r2(t + 1.5) : r2(t - 1.5);
+
+    const distractors = [
+        `t(${Math.max(1, wrongDf)}) = ${tRounded}, ${pStr}`,
+        `t(${df}) = ${tShifted}, ${pStrWrong}`,
+        `t(${df}) = ${tFarther}, ${pStrWrong}`
+    ];
+
+    // Shuffle correct answer position
+    const correctIdx = Math.floor(Math.random() * 4);
+    const options = [];
+    let dIdx = 0;
+    for (let i = 0; i < 4; i++) {
+        options.push(i === correctIdx ? correctOpt : distractors[dIdx++]);
+    }
+    const correctLetter = String.fromCharCode(65 + correctIdx);
+
+    // Build explanation
+    let explanation = '';
+    if (correctedStats.populationMean !== undefined) {
+        explanation = `First, calculate the sample mean: *M* = ${r2(correctedStats.mean)}. The sample standard deviation: *SD* = ${r2(correctedStats.sd)}. Standard error: SE = ${r2(correctedStats.sd)} / \u221a${correctedStats.n} = ${r2(correctedStats.se)}. The t-statistic: *t* = (${r2(correctedStats.mean)} \u2212 ${correctedStats.populationMean}) / ${r2(correctedStats.se)} = ${tRounded}. With df = ${df}, the critical value at \u03b1 = .05 (two-tailed) is ${r2(tCritical)}. Since |${tRounded}| ${isSignificant ? '>' : '<'} ${r2(tCritical)}, the result is ${isSignificant ? 'statistically significant' : 'not statistically significant'}: *t*(${df}) = ${tRounded}, ${pStr}. The correct answer is ${correctLetter}.`;
+    } else if (correctedStats.group1 && correctedStats.group2) {
+        const g1 = correctedStats.group1, g2 = correctedStats.group2;
+        explanation = `Group 1: *M* = ${r2(g1.mean)}, *SD* = ${r2(g1.sd)}, *n* = ${g1.n}. Group 2: *M* = ${r2(g2.mean)}, *SD* = ${r2(g2.sd)}, *n* = ${g2.n}. Pooled variance = ${r2(correctedStats.pooledVar)}, SE = ${r2(correctedStats.se)}. *t* = (${r2(g1.mean)} \u2212 ${r2(g2.mean)}) / ${r2(correctedStats.se)} = ${tRounded}. With df = ${df}: *t*(${df}) = ${tRounded}, ${pStr}. The correct answer is ${correctLetter}.`;
+    } else if (correctedStats.diffStats) {
+        const ds = correctedStats.diffStats;
+        explanation = `Difference scores: mean = ${r2(ds.mean)}, *SD* = ${r2(ds.sd)}, SE = ${r2(ds.se)}. *t* = ${r2(ds.mean)} / ${r2(ds.se)} = ${tRounded}. With df = ${df}: *t*(${df}) = ${tRounded}, ${pStr}. The correct answer is ${correctLetter}.`;
+    }
+
+    return { options, correct_answer: correctLetter, explanation, rebuilt: true };
+}
+
+/**
+ * Rebuild MC options for correlation questions using backend-verified stats
+ */
+function rebuildCorrelationMCOptions(correctedStats) {
+    const { r, df, n } = correctedStats;
+    if (r === undefined || df === undefined) return null;
+
+    const rRounded = r2(r);
+    const tForR = Math.abs(r) * Math.sqrt(n - 2) / Math.sqrt(1 - r * r);
+    const tCritical = getTCritical(df);
+    const isSignificant = tForR > tCritical;
+    const pStr = isSignificant ? 'p < .05' : 'p > .05';
+    const pStrWrong = isSignificant ? 'p > .05' : 'p < .05';
+
+    const correctOpt = `r(${df}) = ${rRounded}, ${pStr}`;
+    const distractors = [
+        `r(${df}) = ${r2(-r)}, ${pStr}`,
+        `r(${df}) = ${r2(r * 0.5)}, ${pStrWrong}`,
+        `r(${df}) = ${r2(Math.min(0.99, Math.abs(r) + 0.25) * (r > 0 ? 1 : -1))}, ${pStrWrong}`
+    ];
+
+    const correctIdx = Math.floor(Math.random() * 4);
+    const options = [];
+    let dIdx = 0;
+    for (let i = 0; i < 4; i++) {
+        options.push(i === correctIdx ? correctOpt : distractors[dIdx++]);
+    }
+    const correctLetter = String.fromCharCode(65 + correctIdx);
+    const explanation = `The Pearson correlation: *r*(${df}) = ${rRounded}. Testing significance with *t* = ${r2(tForR)}, df = ${df}, critical value = ${r2(tCritical)}. The result is ${isSignificant ? 'significant' : 'not significant'}: ${pStr}. The correct answer is ${correctLetter}.`;
+
+    return { options, correct_answer: correctLetter, explanation, rebuilt: true };
+}
+
 /**
  * 使用 FastGPT 生成練習題
  * @param {string} concept - 統計概念
@@ -182,6 +478,7 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
         let additionalInstructions = '';
         let conceptSpecificInstructions = '';
         let sampleSizeJsonSchema = '';
+        let computationStepsSchema = '';
         const apaFormattingGuidelines = `
 **APA Statistical Reporting Requirements (when reporting results):**
 - Use italic formatting for statistical symbols: *M*, *SD*, *t*, *p*, *r*, *F*, *N* (use markdown italics).
@@ -257,6 +554,58 @@ async function generateQuestionWithFastGPT(concept, difficulty, questionType) {
             }
         }
 
+        // Concept-specific instructions for t-test, correlation, and descriptive stats
+        if (concept === 'One-Sample t-Test') {
+            conceptSpecificInstructions += `
+**ONE-SAMPLE t-TEST REQUIREMENTS:**
+- Provide raw data (10-20 values) and a population mean (\u03bc).
+- Fill computation_steps.raw_data with the EXACT numbers from your question.
+- Fill computation_steps.population_mean with the \u03bc value.
+- Compute: mean = sum/N, SD = \u221a[\u03a3(X-M)\u00b2/(N-1)], SE = SD/\u221aN, t = (M-\u03bc)/SE, df = N-1.
+- For MC: options in APA format e.g. "t(14) = 2.63, p < .05". One option must EXACTLY match.
+`;
+        }
+        if (concept === 'Independent Samples t-Test') {
+            conceptSpecificInstructions += `
+**INDEPENDENT SAMPLES t-TEST REQUIREMENTS:**
+- Provide raw data for TWO groups (8-15 values each).
+- Fill computation_steps.raw_data_group1 and raw_data_group2 with EXACT numbers.
+- Compute each group's M and SD, then pooled variance, SE, t, df = n1+n2-2.
+- For MC: options in APA format. One option must EXACTLY match your computed result.
+`;
+        }
+        if (concept === 'Paired Samples t-Test') {
+            conceptSpecificInstructions += `
+**PAIRED SAMPLES t-TEST REQUIREMENTS:**
+- Provide raw pre-test and post-test data (8-15 pairs).
+- Fill computation_steps.raw_data_pre and raw_data_post with EXACT numbers.
+- Compute difference scores, then mean_diff, SD_diff, SE, t = mean_diff/SE, df = N-1.
+- For MC: options in APA format. One option must EXACTLY match your computed result.
+`;
+        }
+        if (concept === 'Correlation Analysis') {
+            conceptSpecificInstructions += `
+**CORRELATION ANALYSIS REQUIREMENTS:**
+- Provide paired X,Y data (8-15 pairs).
+- Fill computation_steps.raw_data_x and raw_data_y with EXACT numbers.
+- Compute Pearson r.
+- For MC: options in APA format e.g. "r(13) = -.85, p < .05". One option must EXACTLY match.
+`;
+        }
+        if (concept === 'Descriptive Statistics' || concept === 'Standard Deviation') {
+            conceptSpecificInstructions += `
+**DESCRIPTIVE STATISTICS REQUIREMENTS:**
+- Fill computation_steps.raw_data with the EXACT numbers from your question.
+- Compute: sum, mean (sum/N), sample SD (using N-1 denominator).
+- For MC: one option must EXACTLY match your computed values.
+`;
+        }
+
+        // Set computation_steps schema for non-Sample-Size concepts
+        if (concept !== 'Sample Size') {
+            computationStepsSchema = getComputationStepsSchema(concept);
+        }
+
         // 構建生成題目的提示詞 (English version for English-speaking users)
         const prompt = `You are a statistics question generator for psychology students. Generate a ${getDifficultyName(difficulty)} difficulty ${getQuestionTypeName(questionType)} question for the concept "${concept}".
 
@@ -269,6 +618,14 @@ ${getDifficultyDescription(difficulty)}
 3. The "explanation" field is REQUIRED for ALL question types.
 4. **STRICTLY FOLLOW the difficulty level requirements above.**
 
+**COMPUTATION ACCURACY (CRITICAL):**
+- When your question includes raw data, COMPUTE step-by-step BEFORE writing options.
+- Fill "computation_steps" with actual raw data arrays and ALL intermediate values.
+- Double-check arithmetic: count data points carefully, add numbers one-by-one.
+- Use SAMPLE SD formula: SD = \u221a[\u03a3(X\u2212M)\u00b2/(N\u22121)], NOT population SD (do NOT divide by N).
+- For MULTIPLE CHOICE: one option must EXACTLY match your computed result. NEVER say "closest" or "approximately".
+- Do NOT round intermediate steps; only round FINAL answer to 2 decimal places.
+
 ${apaFormattingGuidelines}
 
 JSON format:
@@ -280,7 +637,7 @@ JSON format:
     "correct_answer": "${correctAnswerExample}",
     "explanation": "Detailed explanation of why this is the correct answer and the key concepts involved",
     "difficulty_level": ${DIFFICULTY_LEVELS[difficulty]},
-    "concept_name": "${concept}"${sampleSizeJsonSchema}
+    "concept_name": "${concept}"${sampleSizeJsonSchema}${computationStepsSchema}
 }
 \`\`\`
 
@@ -363,6 +720,31 @@ ${conceptSpecificInstructions}
             if (!questionData.question_text) {
                 console.error('❌ JSON 缺少 question_text:', questionData);
                 throw new Error('題目缺少問題內容');
+            }
+
+            // ===== FORCE-OVERRIDE question_type & difficulty_level =====
+            // AI may ignore our instruction and return a different type/difficulty.
+            // Always use the values the user actually selected.
+            if (questionData.question_type !== questionType) {
+                console.warn(`⚠️ AI returned question_type="${questionData.question_type}" but user selected "${questionType}". Overriding.`);
+                questionData.question_type = questionType;
+            }
+            const expectedDiffLevel = DIFFICULTY_LEVELS[difficulty];
+            if (questionData.difficulty_level !== expectedDiffLevel) {
+                console.warn(`⚠️ AI returned difficulty_level=${questionData.difficulty_level} but expected ${expectedDiffLevel}. Overriding.`);
+                questionData.difficulty_level = expectedDiffLevel;
+            }
+
+            // For MC: if AI forgot options, generate a retry or throw
+            if (questionType === 'multiple_choice') {
+                if (!questionData.options || !Array.isArray(questionData.options) || questionData.options.length < 2) {
+                    console.error('❌ MC question missing valid options array:', questionData.options);
+                    throw new Error('AI generated a multiple-choice question without valid options. Please retry.');
+                }
+                if (!questionData.correct_answer) {
+                    console.error('❌ MC question missing correct_answer');
+                    throw new Error('選擇題缺少正確答案');
+                }
             }
             
             // 對於開放式題目，如果缺少 correct_answer 或 explanation，提供預設值
@@ -466,6 +848,82 @@ ${conceptSpecificInstructions}
                     console.warn('⚠️ Sample Size parameters missing; cannot enforce MC options.', {
                         d, alpha, power: resolvedPower, beta, zAlpha, zBeta
                     });
+                }
+            }
+
+            // ===== GENERAL COMPUTATION VERIFICATION =====
+            // For all concepts except Sample Size (already handled above),
+            // verify computation_steps and rebuild MC options if errors are detected.
+            if (questionData.concept_name !== 'Sample Size' && questionData.computation_steps) {
+                const verification = verifyAndCorrectComputations(questionData);
+
+                if (verification.needsCorrection && verification.correctedStats) {
+                    console.log('🔧 Computation errors detected, applying corrections:', verification.corrections);
+
+                    if (questionData.question_type === 'multiple_choice') {
+                        let rebuildResult = null;
+                        const cs = verification.correctedStats;
+
+                        // Decide rebuild strategy by what correctedStats contains, NOT concept name
+                        if (cs.t !== undefined && cs.df !== undefined) {
+                            // t-test result (one-sample, independent, or paired)
+                            rebuildResult = rebuildTTestMCOptions(cs);
+                        } else if (cs.r !== undefined && cs.df !== undefined) {
+                            rebuildResult = rebuildCorrelationMCOptions(cs);
+                        }
+
+                        if (rebuildResult && rebuildResult.rebuilt) {
+                            questionData.options = rebuildResult.options;
+                            questionData.correct_answer = rebuildResult.correct_answer;
+                            questionData.explanation = rebuildResult.explanation;
+                            console.log('✅ MC options rebuilt with corrected computations:', {
+                                concept: questionData.concept_name,
+                                corrections: verification.corrections,
+                                newAnswer: questionData.correct_answer
+                            });
+                        }
+                    } else {
+                        // For non-MC questions, prepend verified computation to explanation
+                        const stats = verification.correctedStats;
+                        let verifiedNote = '\n**Verified Computation:**\n';
+                        if (stats.mean !== undefined) verifiedNote += `- *M* = ${r2(stats.mean)}\n`;
+                        if (stats.sd !== undefined) verifiedNote += `- *SD* = ${r2(stats.sd)}\n`;
+                        if (stats.se !== undefined) verifiedNote += `- SE = ${r2(stats.se)}\n`;
+                        if (stats.t !== undefined) verifiedNote += `- *t*(${stats.df}) = ${r2(stats.t)}\n`;
+                        if (stats.r !== undefined) verifiedNote += `- *r*(${stats.df}) = ${r4(stats.r)}\n`;
+                        if (stats.group1) verifiedNote += `- Group 1: *M* = ${r2(stats.group1.mean)}, *SD* = ${r2(stats.group1.sd)}\n- Group 2: *M* = ${r2(stats.group2.mean)}, *SD* = ${r2(stats.group2.sd)}\n`;
+                        if (stats.diffStats) verifiedNote += `- Mean difference = ${r2(stats.diffStats.mean)}, *SD* = ${r2(stats.diffStats.sd)}\n`;
+                        questionData.explanation = verifiedNote + '\n' + (questionData.explanation || '');
+                        console.log('✅ Non-MC explanation updated with verified computations');
+                    }
+                } else if (verification.verified) {
+                    console.log('✅ Computation verification passed - all values correct');
+                } else if (verification.noSteps) {
+                    console.log('⚠️ No computation_steps found - cannot verify');
+                }
+
+                // --- DUPLICATE OPTION SAFETY NET ---
+                // Even when verification passed or no correction was made,
+                // detect MC options that are near-duplicates (differ only by sign or minor p-value).
+                if (questionData.question_type === 'multiple_choice' && Array.isArray(questionData.options) && questionData.options.length === 4) {
+                    const opts = questionData.options.map(o => o.toString().replace(/[-−]/g, '').replace(/\s/g, '').toLowerCase());
+                    const uniqueOpts = new Set(opts);
+                    if (uniqueOpts.size < 3) {
+                        console.warn('⚠️ Duplicate/near-duplicate MC options detected. Forcing rebuild.');
+                        const cs = verification.correctedStats;
+                        let rebuildResult = null;
+                        if (cs && cs.t !== undefined && cs.df !== undefined) {
+                            rebuildResult = rebuildTTestMCOptions(cs);
+                        } else if (cs && cs.r !== undefined && cs.df !== undefined) {
+                            rebuildResult = rebuildCorrelationMCOptions(cs);
+                        }
+                        if (rebuildResult && rebuildResult.rebuilt) {
+                            questionData.options = rebuildResult.options;
+                            questionData.correct_answer = rebuildResult.correct_answer;
+                            questionData.explanation = rebuildResult.explanation;
+                            console.log('✅ Duplicate options replaced with rebuilt set');
+                        }
+                    }
                 }
             }
             
